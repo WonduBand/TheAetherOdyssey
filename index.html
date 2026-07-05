@@ -1140,7 +1140,7 @@ function renderTrackNav() {
     row.addEventListener('click', () => selectTrack(i));
     row.querySelector('.row-play-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      playTrackDirect(state.album, i);
+      toggleOrPlay(state.album, i);
     });
     el.appendChild(row);
   });
@@ -1224,7 +1224,7 @@ function renderText() {
       item.addEventListener('click', () => selectTrack(i));
       item.querySelector('.row-play-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        playTrackDirect(state.album, i);
+        toggleOrPlay(state.album, i);
       });
       list.appendChild(item);
     });
@@ -1361,6 +1361,15 @@ function playTrackDirect(albumNum, idx) {
   renderCover();
   renderText();
   loadAndPlay(albumNum, idx);
+}
+
+// Same track already loaded → toggle pause/resume. Different track → start it fresh.
+function toggleOrPlay(albumNum, idx) {
+  if (playingAlbum === albumNum && playingIdx === idx) {
+    togglePlayPause();
+  } else {
+    playTrackDirect(albumNum, idx);
+  }
 }
 
 function loadAndPlay(albumNum, idx) {
