@@ -1384,8 +1384,32 @@ function loadAndPlay(albumNum, idx) {
 
 function togglePlayPause() {
   if (!audioPlayer.src) return;
-  if (audioPlayer.paused) audioPlayer.play(); else audioPlayer.pause();
+  if (audioPlayer.paused) {
+    audioPlayer.play().catch(err => {
+      console.warn('Resume failed, retrying after reload:', err);
+      const t = audioPlayer.currentTime;
+      audioPlayer.load();
+      audioPlayer.currentTime = t;
+      audioPlayer.play().catch(err2 => console.error('Retry also failed:', err2));
+    });
+  } else {
+    audioPlayer.pause();
+  }
 }
+
+audioPlayer.addEventListener('error', () => {
+  const err = audioPlayer.error;
+  let msg = 'Unknown playback error';
+  if (err) {
+    switch (err.code) {
+      case err.MEDIA_ERR_ABORTED: msg = 'Playback aborted'; break;
+      case err.MEDIA_ERR_NETWORK: msg = 'Network error while loading audio'; break;
+      case err.MEDIA_ERR_DECODE: msg = 'File could not be decoded (corrupt or unsupported encoding)'; break;
+      case err.MEDIA_ERR_SRC_NOT_SUPPORTED: msg = 'File not found or format not supported'; break;
+    }
+  }
+  console.error('Audio error on', audioPlayer.src, '—', msg);
+});
 
 // Autoplay: rolls from track to track, then album to album (I → II → III → IV).
 function playNextGlobal() {
