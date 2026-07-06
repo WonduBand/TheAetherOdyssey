@@ -312,6 +312,24 @@
   ::-webkit-scrollbar-thumb { background: var(--border); }
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-deep); }
 
+  /* ── MOBILE TAB BAR (hidden on desktop) ── */
+  .mobile-tabbar {
+    display: none;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    transition: border-color 0.5s ease, background 0.5s ease;
+  }
+  .mobile-tab-btn {
+    flex: 1; background: transparent; border: none; cursor: pointer;
+    color: var(--text-dim); font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.6rem 0.2rem 0.55rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    transition: color 0.2s;
+  }
+  .mobile-tab-btn .mtb-icon { font-size: 1.15rem; line-height: 1; }
+  .mobile-tab-btn.active { color: var(--accent); }
+
   @media (max-width: 980px) {
     .app { grid-template-rows: auto 1fr auto auto; }
 
@@ -331,24 +349,6 @@
 
     .mobile-tabbar { display: flex; }
   }
-
-  /* ── MOBILE TAB BAR (hidden on desktop) ── */
-  .mobile-tabbar {
-    display: none;
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    transition: border-color 0.5s ease, background 0.5s ease;
-  }
-  .mobile-tab-btn {
-    flex: 1; background: transparent; border: none; cursor: pointer;
-    color: var(--text-dim); font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 0.6rem 0.2rem 0.55rem;
-    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-    transition: color 0.2s;
-  }
-  .mobile-tab-btn .mtb-icon { font-size: 1.15rem; line-height: 1; }
-  .mobile-tab-btn.active { color: var(--accent); }
 
   @media (max-width: 480px) {
     .mini-player { gap: 0.5rem; padding: 0.5rem 0.8rem; }
