@@ -171,11 +171,11 @@
   }
   .mp-btn:hover { border-color: var(--accent); color: var(--accent); }
   .mp-play { width: 2.3rem; height: 2.3rem; font-size: 0.8rem; }
-  .mp-info { min-width: 8rem; max-width: 240px; overflow: hidden; }
+  .mp-info { min-width: 0; flex: 1 1 auto; max-width: 240px; overflow: hidden; }
   .mp-title { font-family:'Rajdhani',sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mp-album { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.5s ease; }
   .mp-progress {
-    flex: 1; height: 3px; -webkit-appearance: none; appearance: none;
+    flex: 1; min-width: 0; height: 3px; -webkit-appearance: none; appearance: none;
     background: var(--border); border-radius: 2px; cursor: pointer; outline: none;
     transition: background 0.5s ease;
   }
@@ -194,7 +194,7 @@
   .mp-vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
 
   @media (max-width: 700px) {
-    .mp-info { min-width: 4.5rem; max-width: 100px; }
+    .mp-info { max-width: 100px; }
     .mp-time { display: none; }
     .mp-vol-slider { width: 46px; }
   }
@@ -250,7 +250,7 @@
     display: flex; align-items: center; gap: 0.8rem; transition: border-color 0.5s ease;
   }
   .text-head .th-num { font-size: 0.62rem; color: var(--accent-deep); letter-spacing: 0.1em; transition: color 0.5s ease; }
-  .text-head .th-title { font-family:'Rajdhani',sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; flex: 1; }
+  .text-head .th-title { font-family:'Rajdhani',sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .text-head .th-badge { font-size: 0.5rem; letter-spacing: 0.15em; padding: 0.25rem 0.55rem; border: 1px solid var(--border-dim); color: var(--text-dim); text-transform: uppercase; white-space: nowrap; transition: all 0.5s ease; }
   .text-nav-btn {
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
@@ -313,12 +313,50 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--accent-deep); }
 
   @media (max-width: 980px) {
-    html, body { overflow-y: auto; height: auto; }
-    .app { height: auto; }
-    .app-main { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 46vh; }
-    .cover-pane { height: 42vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .app { grid-template-rows: auto 1fr auto auto; }
+
+    .app-main {
+      grid-template-columns: 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Only the active mobile view is shown; the rest are hidden entirely */
+    .sidebar, .cover-pane, .text-pane { display: none; height: 100%; max-height: none; border: none; }
+    .app-main[data-view="tracks"] .sidebar { display: flex; }
+    .app-main[data-view="cover"] .cover-pane { display: flex; height: 100%; }
+    .app-main[data-view="lyrics"] .text-pane { display: flex; }
+
     .text-body { max-height: none; }
+
+    .mobile-tabbar { display: flex; }
+  }
+
+  /* ── MOBILE TAB BAR (hidden on desktop) ── */
+  .mobile-tabbar {
+    display: none;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    transition: border-color 0.5s ease, background 0.5s ease;
+  }
+  .mobile-tab-btn {
+    flex: 1; background: transparent; border: none; cursor: pointer;
+    color: var(--text-dim); font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.6rem 0.2rem 0.55rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    transition: color 0.2s;
+  }
+  .mobile-tab-btn .mtb-icon { font-size: 1.15rem; line-height: 1; }
+  .mobile-tab-btn.active { color: var(--accent); }
+
+  @media (max-width: 480px) {
+    .mini-player { gap: 0.5rem; padding: 0.5rem 0.8rem; }
+    .mp-volume { display: none; }
+    .text-head { padding: 0.8rem 1rem 0.7rem; gap: 0.5rem; }
+    .text-head .th-num { display: none; }
+    .text-head .th-title { font-size: 1.05rem; }
+    .text-body { padding: 1rem 1.1rem 1.6rem; }
   }
 </style>
 </head>
@@ -392,6 +430,12 @@
       <button class="mp-btn mp-vol-btn" id="mpMute" title="Mute / Unmute">🔊</button>
       <input type="range" class="mp-vol-slider" id="mpVolume" min="0" max="100" value="100" title="Volume">
     </div>
+  </div>
+
+  <div class="mobile-tabbar" id="mobileTabbar">
+    <button class="mobile-tab-btn" data-view="tracks"><span class="mtb-icon">☰</span>Tracks</button>
+    <button class="mobile-tab-btn" data-view="cover"><span class="mtb-icon">◈</span>Cover</button>
+    <button class="mobile-tab-btn active" data-view="lyrics"><span class="mtb-icon">▤</span>Lyrics</button>
   </div>
 </div>
 
@@ -1296,6 +1340,7 @@ function selectTrack(i) {
   renderTrackNav();
   renderCover();
   renderText();
+  if (i !== -1) setMobileView('lyrics');
 }
 
 function stepTrack(dir) {
@@ -1361,6 +1406,7 @@ function playTrackDirect(albumNum, idx) {
   renderCover();
   renderText();
   loadAndPlay(albumNum, idx);
+  setMobileView('lyrics');
 }
 
 // Same track already loaded → toggle pause/resume. Different track → start it fresh.
@@ -1518,6 +1564,18 @@ mpMuteBtn.addEventListener('click', () => {
   }
   updateVolumeIcon();
 });
+
+// ── MOBILE TAB BAR ──
+const mobileTabButtons = document.querySelectorAll('.mobile-tab-btn');
+const appMainEl = document.querySelector('.app-main');
+function setMobileView(view) {
+  appMainEl.dataset.view = view;
+  mobileTabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+}
+mobileTabButtons.forEach(btn => {
+  btn.addEventListener('click', () => setMobileView(btn.dataset.view));
+});
+setMobileView('lyrics');
 
 // ── FULLSCREEN TOGGLE ──
 const fsBtn = document.getElementById('fullscreenBtn');
