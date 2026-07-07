@@ -1455,21 +1455,23 @@ let analyser = null;
 let freqData = null;
 
 function ensureAudioAnalyser() {
-  if (analyser) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return;
+  if (!analyser) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaElementSource(audioPlayer);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.82;
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+    } catch (e) {
+      console.warn('Web Audio visualizer unavailable:', e);
+      analyser = null;
+    }
   }
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtx.createMediaElementSource(audioPlayer);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 128;
-    analyser.smoothingTimeConstant = 0.82;
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    freqData = new Uint8Array(analyser.frequencyBinCount);
-  } catch (e) {
-    console.warn('Web Audio visualizer unavailable:', e);
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(err => console.warn('AudioContext resume failed:', err));
   }
 }
 
@@ -1605,7 +1607,10 @@ function formatTime(s) {
   return `${m}:${sec}`;
 }
 
-audioPlayer.addEventListener('play', refreshPlayingIndicators);
+audioPlayer.addEventListener('play', () => {
+  refreshPlayingIndicators();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+});
 audioPlayer.addEventListener('pause', refreshPlayingIndicators);
 audioPlayer.addEventListener('ended', playNextGlobal);
 audioPlayer.addEventListener('timeupdate', () => {
