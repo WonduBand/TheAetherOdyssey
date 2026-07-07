@@ -262,7 +262,7 @@
   .cover-tagline { font-size: 0.8rem; font-style: italic; color: #ddd; margin-top: 0.6rem; max-width: 480px; }
   .cover-meta { display:flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.1rem; font-size: 0.58rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
   .cover-meta span { color: var(--accent); transition: color 0.5s ease; }
-  .cover-pulse { width: 100%; height: 34px; margin-top: 0.9rem; opacity: 0.6; display:block; }
+  .cover-pulse { width: 100%; height: 34px; margin-top: 0.9rem; display:block; }
 
   /* ── TEXT PANE ── */
   .text-pane { display: flex; flex-direction: column; min-height: 0; background: var(--bg); transition: background 0.5s ease; }
@@ -1182,44 +1182,58 @@ function initPulseCanvas() {
     const W = canvas.offsetWidth, H = canvas.offsetHeight;
     pulseCtx.clearRect(0,0,W,H);
 
-    let amp1 = 8, amp2 = 5, amp3 = 3, amp1b = 11, amp2b = 4, speedMult = 1;
+    // Solid backing panel so the readout always reads clearly against any artwork
+    pulseCtx.fillStyle = 'rgba(0,0,0,0.55)';
+    pulseCtx.fillRect(0, 0, W, H);
 
     const isPlaying = analyser && audioCtx && audioCtx.state === 'running' && !audioPlayer.paused;
-    if (isPlaying) {
-      analyser.getByteFrequencyData(freqData);
-      const n = freqData.length;
-      const bandAvg = (from, to) => {
-        let sum = 0;
-        for (let i = from; i < to; i++) sum += freqData[i];
-        return sum / (to - from) / 255;
-      };
-      const bass = bandAvg(0, Math.floor(n * 0.15));
-      const mid = bandAvg(Math.floor(n * 0.15), Math.floor(n * 0.5));
-      const treble = bandAvg(Math.floor(n * 0.5), n);
-      const energy = (bass + mid + treble) / 3;
 
-      amp1 = 8 + bass * 26;
-      amp2 = 5 + mid * 16;
-      amp3 = 3 + treble * 12;
-      amp1b = 11 + mid * 18;
-      amp2b = 4 + treble * 10;
-      speedMult = 1 + energy * 1.6;
+    if (isPlaying) {
+      analyser.getByteTimeDomainData(waveData);
+      const n = waveData.length;
+      const slice = W / (n - 1);
+
+      pulseCtx.beginPath();
+      pulseCtx.strokeStyle = meta.ice; pulseCtx.lineWidth = 1.5;
+      pulseCtx.shadowColor = meta.ice; pulseCtx.shadowBlur = 8;
+      for (let i = 0; i < n; i++) {
+        const v = (waveData[i] - 128) / 128;
+        const y = H/2 + v * (H * 0.48);
+        const x = i * slice;
+        i === 0 ? pulseCtx.moveTo(x, y) : pulseCtx.lineTo(x, y);
+      }
+      pulseCtx.stroke();
+
+      pulseCtx.beginPath();
+      pulseCtx.strokeStyle = meta.mid; pulseCtx.lineWidth = 0.9; pulseCtx.shadowBlur = 4;
+      pulseCtx.globalAlpha = 0.7;
+      for (let i = 0; i < n; i++) {
+        const v = (waveData[i] - 128) / 128;
+        const y = H/2 + v * (H * 0.3) + 2;
+        const x = i * slice;
+        i === 0 ? pulseCtx.moveTo(x, y) : pulseCtx.lineTo(x, y);
+      }
+      pulseCtx.stroke();
+      pulseCtx.globalAlpha = 1;
+
+      pulseAnim = requestAnimationFrame(draw);
+      return;
     }
 
     pulseCtx.beginPath(); pulseCtx.strokeStyle = meta.mid; pulseCtx.lineWidth = 1.2;
     pulseCtx.shadowColor = meta.ice; pulseCtx.shadowBlur = 8;
     for (let x = 0; x <= W; x++) {
-      const y = H/2 + Math.sin(x*0.02+pulseT)*amp1 + Math.sin(x*0.008+pulseT*0.6)*amp2 + Math.sin(x*0.035+pulseT*1.4)*amp3;
+      const y = H/2 + Math.sin(x*0.02+pulseT)*8 + Math.sin(x*0.008+pulseT*0.6)*5 + Math.sin(x*0.035+pulseT*1.4)*3;
       x===0 ? pulseCtx.moveTo(x,y) : pulseCtx.lineTo(x,y);
     }
     pulseCtx.stroke();
     pulseCtx.beginPath(); pulseCtx.strokeStyle = meta.ice + '44'; pulseCtx.lineWidth = 0.8; pulseCtx.shadowBlur = 4;
     for (let x = 0; x <= W; x++) {
-      const y = H/2 + Math.sin(x*0.014+pulseT*0.8+1.5)*amp1b + Math.sin(x*0.028+pulseT*0.4)*amp2b;
+      const y = H/2 + Math.sin(x*0.014+pulseT*0.8+1.5)*11 + Math.sin(x*0.028+pulseT*0.4)*4;
       x===0 ? pulseCtx.moveTo(x,y) : pulseCtx.lineTo(x,y);
     }
     pulseCtx.stroke();
-    pulseT += 0.012 * speedMult;
+    pulseT += 0.012;
     pulseAnim = requestAnimationFrame(draw);
   }
   resize(); window.addEventListener('resize', resize); draw();
@@ -1457,6 +1471,7 @@ let playingIdx = null;
 let audioCtx = null;
 let analyser = null;
 let freqData = null;
+let waveData = null;
 
 function ensureAudioAnalyser() {
   if (!analyser) {
@@ -1464,11 +1479,12 @@ function ensureAudioAnalyser() {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtx.createMediaElementSource(audioPlayer);
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.82;
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.15;
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
       freqData = new Uint8Array(analyser.frequencyBinCount);
+      waveData = new Uint8Array(analyser.fftSize);
     } catch (e) {
       console.warn('Web Audio visualizer unavailable:', e);
       analyser = null;
