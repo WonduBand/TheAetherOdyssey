@@ -381,6 +381,15 @@
       will-change: transform;
     }
     .cover-pane { flex-direction: column; }
+    .cover-pane.track-selected .cover-top,
+    .cover-pane.track-selected .cover-eyebrow,
+    .cover-pane.track-selected .cover-title,
+    .cover-pane.track-selected .cover-tagline,
+    .cover-pane.track-selected .cover-meta { display: none; }
+    .cover-pulse {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      width: 100%; margin: 0;
+    }
 
     /* Default resting order: tracks | cover | lyrics, left to right */
     .sidebar { transform: translateX(-100%); }
@@ -1282,6 +1291,8 @@ function renderTrackNav() {
 function renderCover() {
   const meta = ALBUMS[state.album];
   const track = state.track >= 0 ? meta.tracks[state.track] : null;
+
+  document.querySelector('.cover-pane').classList.toggle('track-selected', !!track);
 
   const coverBottom = document.querySelector('.cover-bottom');
   if (coverBottom) {
