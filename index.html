@@ -261,6 +261,7 @@
   }
   .cover-tagline { font-size: 0.8rem; font-style: italic; color: #ddd; margin-top: 0.6rem; max-width: 480px; }
   .cover-meta { display:flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.1rem; font-size: 0.58rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+  .cover-song-note { display: none; font-size: 0.85rem; font-style: italic; color: rgba(255,255,255,0.78); line-height: 1.75; max-width: 560px; margin-top: 0.6rem; }
   .cover-meta span { color: var(--accent); transition: color 0.5s ease; }
   .cover-pulse { width: 100%; height: 34px; margin-top: 0.9rem; display:block; }
 
@@ -288,6 +289,10 @@
   @media (min-width: 981px) {
     .cover-bottom { animation: fadeInLeft 0.4s ease both; }
     .text-body > * { animation: fadeInLeft 0.4s ease both; }
+    .cover-pane.track-selected .cover-tagline,
+    .cover-pane.track-selected .cover-meta { display: none; }
+    .cover-pane.track-selected .cover-song-note { display: block; }
+    .track-note { display: none; }
   }
 
   .track-note {
@@ -462,6 +467,7 @@
           <div class="cover-title" id="coverTitle">Ignition</div>
           <div class="cover-tagline" id="coverTagline"></div>
           <div class="cover-meta" id="coverMeta"></div>
+          <div class="cover-song-note" id="coverSongNote"></div>
           <canvas class="cover-pulse" id="coverPulse"></canvas>
         </div>
       </div>
@@ -1302,8 +1308,9 @@ function renderCover() {
   }
 
   document.getElementById('coverEyebrow').textContent = meta.label;
-  document.getElementById('coverTitle').textContent = meta.title;
+  document.getElementById('coverTitle').textContent = track ? track.title : meta.title;
   document.getElementById('coverTagline').textContent = meta.tagline;
+  document.getElementById('coverSongNote').textContent = track ? (track.note || '') : '';
 
   const metaEl = document.getElementById('coverMeta');
   metaEl.innerHTML = meta.meta.map(([k,v]) => `<div>${k} <span>${v}</span></div>`).join('');
