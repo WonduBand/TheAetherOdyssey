@@ -286,13 +286,14 @@
   @keyframes contentFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .text-body > * { animation: contentFadeIn 0.35s ease both; }
   @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+  .track-note { display: none; }
+
   @media (min-width: 981px) {
     .cover-bottom { animation: fadeInLeft 0.4s ease both; }
     .text-body > * { animation: fadeInLeft 0.4s ease both; }
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
     .cover-pane.track-selected .cover-song-note { display: block; }
-    .track-note { display: none; }
   }
 
   .track-note {
@@ -385,15 +386,31 @@
       transition: transform 0.38s cubic-bezier(.4,0,.2,1);
       will-change: transform;
     }
-    .cover-pane { flex-direction: column; }
-    .cover-pane.track-selected .cover-top,
-    .cover-pane.track-selected .cover-eyebrow,
-    .cover-pane.track-selected .cover-title,
+    .cover-pane {
+      flex-direction: column;
+      overflow-y: auto;
+      align-items: stretch;
+    }
+    .cover-img-wrap {
+      position: relative; inset: auto;
+      width: 100%; flex-shrink: 0;
+    }
+    .cover-img { height: auto; object-fit: contain; display: block; }
+    .cover-scrim { display: none; }
+    .cover-content {
+      position: relative; z-index: auto;
+      flex: 0 0 auto;
+      background: #000;
+      margin-top: -1.4rem;
+      padding: 1.6rem 1.4rem 1.8rem;
+      justify-content: flex-start;
+    }
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
+    .cover-pane.track-selected .cover-song-note { display: block; }
     .cover-pulse {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      width: 100%; margin: 0;
+      position: static;
+      width: 100%; margin: 1.2rem 0 0;
     }
 
     /* Default resting order: tracks | cover | lyrics, left to right */
