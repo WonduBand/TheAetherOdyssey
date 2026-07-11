@@ -1309,7 +1309,7 @@ function renderAlbumTabs() {
     const meta = ALBUMS[num];
     const btn = document.createElement('button');
     btn.className = 'album-tab' + (state.album === num ? ' active-' + num : '');
-    btn.style.setProperty('--tab-cover', `url(${meta.cover})`);
+    btn.style.setProperty('--tab-cover', `url('${meta.cover}')`);
     btn.innerHTML = `<span class="num">${meta.roman}</span><span class="title-text">${meta.title}</span>`;
     btn.addEventListener('click', () => selectAlbum(num));
     el.appendChild(btn);
