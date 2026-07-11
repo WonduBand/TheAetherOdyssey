@@ -155,6 +155,9 @@
     color: #333; border-top: 1px solid var(--border); text-transform: uppercase;
     transition: border-color 0.5s ease;
   }
+  @media (max-width: 980px) {
+    .sidebar-foot { display: none; }
+  }
 
   /* ── PLAY BUTTONS & NOW-PLAYING STATE ── */
   .row-play-btn {
@@ -512,6 +515,7 @@
         <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
         <div class="cover-glow" id="coverGlow"></div>
         <video id="clipVideo" class="clip-video" muted playsinline webkit-playsinline></video>
+        <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
       </div>
       <div class="cover-scrim"></div>
       <div class="cover-content">
@@ -528,7 +532,6 @@
           <canvas class="cover-pulse" id="coverPulse"></canvas>
         </div>
       </div>
-      <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
     </section>
 
     <section class="text-pane">
