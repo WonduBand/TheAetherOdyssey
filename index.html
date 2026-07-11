@@ -45,6 +45,31 @@
     height: 100%;
     display: grid;
     grid-template-rows: auto 1fr auto;
+    position: relative; z-index: 1;
+  }
+
+  /* ── AMBIENT WALLPAPER (Elysium / Album 3 only, for now) ── */
+  .ambient-wallpaper {
+    position: fixed; inset: 0; z-index: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity 1.2s ease;
+  }
+  .ambient-wallpaper.active { opacity: 1; }
+  .ambient-img {
+    position: absolute; top: -6%; left: -6%; width: 112%; height: 112%;
+    background-image: url('Album 3/Elysium_Wallpaper.png');
+    background-size: cover; background-position: center;
+    will-change: transform;
+  }
+  .ambient-mist, .ambient-particles {
+    position: absolute; top: -6%; left: -6%; width: 112%; height: 112%;
+  }
+
+  body[data-album="3"] .topbar,
+  body[data-album="3"] .sidebar {
+    background: rgba(6,15,8,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   .topbar {
@@ -335,6 +360,7 @@
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
     .cover-pane.track-selected .cover-song-note { display: block; }
+    .text-pane { max-width: 640px; justify-self: start; }
   }
 
   .track-note {
@@ -489,6 +515,12 @@
 </style>
 </head>
 <body data-album="1">
+
+<div class="ambient-wallpaper" id="ambientWallpaper">
+  <div class="ambient-img" id="ambientImg"></div>
+  <canvas class="ambient-mist" id="ambientMist"></canvas>
+  <canvas class="ambient-particles" id="ambientParticles"></canvas>
+</div>
 
 <div class="app">
 
@@ -1478,6 +1510,7 @@ function selectAlbum(num) {
   state.album = num;
   state.track = -1; // land on the album cover first
   document.body.setAttribute('data-album', String(num));
+  setAmbientWallpaper(num);
   renderAlbumTabs();
   renderTrackNav();
   renderCover();
@@ -1855,7 +1888,129 @@ document.addEventListener('fullscreenchange', () => {
   fsBtn.title = document.fullscreenElement ? 'Exit fullscreen' : 'Toggle fullscreen';
 });
 
+// ── AMBIENT WALLPAPER (Elysium / Album 3 for now) ──
+const ambientWallpaper = document.getElementById('ambientWallpaper');
+const ambientImg = document.getElementById('ambientImg');
+const ambientMistCanvas = document.getElementById('ambientMist');
+const ambientParticlesCanvas = document.getElementById('ambientParticles');
+
+function setupAmbientCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth * 1.12, h = window.innerHeight * 1.12;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w, h };
+}
+
+let ambientMist = setupAmbientCanvas(ambientMistCanvas);
+let ambientParticles = setupAmbientCanvas(ambientParticlesCanvas);
+
+const ambientMistBlobs = Array.from({ length: 6 }, () => ({
+  x: Math.random(), y: 0.45 + Math.random() * 0.35,
+  r: 0.18 + Math.random() * 0.12,
+  speed: 0.05 + Math.random() * 0.05,
+  phase: Math.random() * Math.PI * 2,
+}));
+
+// Motes skew warmer the further right they sit, echoing the setting sun on that side of the art.
+const ambientMotes = Array.from({ length: 55 }, () => ({
+  x: Math.random(), y: 0.35 + Math.random() * 0.65,
+  r: Math.random() * 2 + 0.8,
+  riseSpeed: 0.1 + Math.random() * 0.2,
+  driftPhase: Math.random() * Math.PI * 2,
+  twinklePhase: Math.random() * Math.PI * 2,
+}));
+
+let ambientT = 0;
+let ambientMouseX = 0, ambientMouseY = 0;
+let ambientActive = false;
+let ambientRaf = null;
+
+function moteColor(xFrac, alpha) {
+  // Left side: cool teal (matches the crystals) → right side: warm gold (matches the setting sun)
+  const cool = [120, 255, 230];
+  const warm = [255, 195, 110];
+  const mix = xFrac; // 0 = left/cool, 1 = right/warm
+  const r = Math.round(cool[0] + (warm[0] - cool[0]) * mix);
+  const g = Math.round(cool[1] + (warm[1] - cool[1]) * mix);
+  const b = Math.round(cool[2] + (warm[2] - cool[2]) * mix);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawAmbientMist() {
+  const { ctx, w, h } = ambientMist;
+  ctx.clearRect(0, 0, w, h);
+  ambientMistBlobs.forEach(b => {
+    const x = b.x * w + Math.sin(ambientT * b.speed + b.phase) * w * 0.06;
+    const y = b.y * h + Math.cos(ambientT * b.speed * 0.7 + b.phase) * h * 0.03;
+    const r = b.r * Math.max(w, h);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(190,230,210,0.08)');
+    g.addColorStop(1, 'rgba(190,230,210,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
+}
+
+function drawAmbientParticles() {
+  const { ctx, w, h } = ambientParticles;
+  ctx.clearRect(0, 0, w, h);
+  ambientMotes.forEach(m => {
+    m.y -= (m.riseSpeed * 0.15) / h;
+    if (m.y < -0.02) m.y = 1.02;
+    const x = m.x * w + Math.sin(ambientT * 0.4 + m.driftPhase) * 6;
+    const y = m.y * h;
+    const tw = 0.4 + 0.6 * (Math.sin(ambientT * 1.1 + m.twinklePhase) * 0.5 + 0.5);
+    ctx.beginPath();
+    ctx.fillStyle = moteColor(m.x, tw * 0.8);
+    ctx.shadowColor = moteColor(m.x, 0.9);
+    ctx.shadowBlur = 6;
+    ctx.arc(x, y, m.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function applyAmbientParallax() {
+  ambientImg.style.transform = `translate(${ambientMouseX * 8}px, ${ambientMouseY * 6}px) scale(1.02)`;
+  ambientMistCanvas.style.transform = `translate(${ambientMouseX * 16}px, ${ambientMouseY * 12}px)`;
+  ambientParticlesCanvas.style.transform = `translate(${ambientMouseX * 28}px, ${ambientMouseY * 20}px)`;
+}
+
+window.addEventListener('mousemove', (e) => {
+  if (!ambientActive) return;
+  ambientMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  ambientMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  ambientMist = setupAmbientCanvas(ambientMistCanvas);
+  ambientParticles = setupAmbientCanvas(ambientParticlesCanvas);
+});
+
+function ambientLoop() {
+  ambientT += 0.02;
+  drawAmbientMist();
+  drawAmbientParticles();
+  applyAmbientParallax();
+  ambientRaf = requestAnimationFrame(ambientLoop);
+}
+
+function setAmbientWallpaper(albumNum) {
+  const shouldShow = (albumNum === 3); // Elysium / Genesis, for now
+  if (shouldShow && !ambientActive) {
+    ambientActive = true;
+    ambientWallpaper.classList.add('active');
+    if (!ambientRaf) ambientLoop();
+  } else if (!shouldShow && ambientActive) {
+    ambientActive = false;
+    ambientWallpaper.classList.remove('active');
+  }
+}
+
 // ── INIT ──
+setAmbientWallpaper(state.album);
 renderAlbumTabs();
 renderTrackNav();
 renderCover();
