@@ -408,12 +408,15 @@
   .text-pane-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
   .cover-pane-inner {
-    display: flex; flex-direction: column; width: 100%; height: 100%;
+    display: flex; flex-direction: column; width: 100%;
     background: #000;
     transition: transform 0.45s ease, opacity 0.4s ease, background 0.5s ease;
   }
   @media (min-width: 981px) {
-    .cover-pane-inner.collapsed { transform: translateX(40px); opacity: 0; pointer-events: none; }
+    .cover-pane-inner { height: 100%; }
+  }
+  @media (min-width: 981px) {
+    .cover-pane-inner.collapsed { transform: translateX(-100%); opacity: 0; pointer-events: none; }
   }
   .cover-pane-toggle {
     grid-column: 2; align-self: start; justify-self: center;
@@ -650,7 +653,7 @@
       <div class="sidebar-foot" id="sidebarFoot">⬡ Elysium Archive Project ⬡</div>
     </nav>
 
-    <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">»</button>
+    <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">«</button>
 
     <section class="cover-pane">
       <div class="cover-pane-inner" id="coverPaneInner">
@@ -2006,7 +2009,7 @@ const coverPane = document.querySelector('.cover-pane');
 coverPaneToggle.addEventListener('click', () => {
   const collapsed = coverPaneInner.classList.toggle('collapsed');
   coverPane.classList.toggle('panel-collapsed', collapsed);
-  coverPaneToggle.textContent = collapsed ? '«' : '»';
+  coverPaneToggle.textContent = collapsed ? '»' : '«';
   coverPaneToggle.title = collapsed ? 'Show artwork panel' : 'Hide artwork panel';
 });
 
