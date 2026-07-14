@@ -150,7 +150,7 @@
 
   .app-main {
     display: grid;
-    grid-template-columns: 300px minmax(0,1.15fr) 2.8rem minmax(0,1fr);
+    grid-template-columns: 300px 2.4rem minmax(0,1.15fr) 2.8rem minmax(0,1fr);
     min-height: 0;
   }
 
@@ -312,6 +312,7 @@
     border-right: 1px solid var(--border);
     transition: border-color 0.5s ease;
     display: flex; align-items: stretch; justify-content: stretch;
+    grid-column: 3;
   }
   .cover-img-wrap { position: absolute; inset: 0; }
   .cover-glow {
@@ -363,12 +364,12 @@
   .cover-clip-btn {
     position: absolute; right: 1rem; bottom: 1rem; z-index: 6;
     width: 2.4rem; height: 2.4rem; border-radius: 50%;
-    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.25);
-    color: #fff; font-size: 1.1rem; cursor: pointer;
+    background: rgba(40,0,0,0.6); border: 1px solid #ff3b3b;
+    color: #ff5c5c; font-size: 1.1rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
   }
-  .cover-clip-btn:hover { background: rgba(0,0,0,0.8); border-color: #fff; transform: scale(1.06); }
+  .cover-clip-btn:hover { background: rgba(80,0,0,0.85); border-color: #ff6b6b; color: #ff8080; transform: scale(1.06); }
   .cover-pane.track-selected .cover-clip-btn { display: none; }
 
   .clip-video {
@@ -385,7 +386,7 @@
   .text-pane {
     display: flex; flex-direction: column; min-height: 0;
     position: relative;
-    grid-column: 4;
+    grid-column: 5;
   }
   .text-pane-inner {
     display: flex; flex-direction: column; min-height: 0; flex: 1;
@@ -403,6 +404,26 @@
     transition: all 0.2s;
   }
   .text-pane-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .cover-pane-inner {
+    display: flex; flex-direction: column; width: 100%; height: 100%;
+    transition: transform 0.45s ease, opacity 0.4s ease;
+  }
+  @media (min-width: 981px) {
+    .cover-pane-inner.collapsed { transform: translateX(40px); opacity: 0; pointer-events: none; }
+  }
+  .cover-pane-toggle {
+    position: absolute; left: -2.05rem; top: 1rem; z-index: 5;
+    width: 2.1rem; height: 1.9rem; border-radius: 3px;
+    background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-dim);
+    font-size: 0.8rem; letter-spacing: 0.02em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .cover-pane-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media (max-width: 980px) {
+    .cover-pane-toggle { display: none; }
+  }
   @media (max-width: 980px) {
     .text-pane-toggle { display: none; }
   }
@@ -626,26 +647,29 @@
     </nav>
 
     <section class="cover-pane">
-      <div class="cover-img-wrap">
-        <img class="cover-img" id="coverImg" src="" alt="">
-        <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
-        <div class="cover-glow" id="coverGlow"></div>
-        <video id="clipVideo" class="clip-video" muted playsinline webkit-playsinline></video>
-        <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
-      </div>
-      <div class="cover-scrim"></div>
-      <div class="cover-content">
-        <div class="cover-top">
-          <div id="coverNode">NODE: ELYSIUM-PRIMARY</div>
-          <div id="coverArchive">AETHER ODYSSEY // SAGA DOCUMENT ARCHIVE</div>
+      <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">»</button>
+      <div class="cover-pane-inner" id="coverPaneInner">
+        <div class="cover-img-wrap">
+          <img class="cover-img" id="coverImg" src="" alt="">
+          <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
+          <div class="cover-glow" id="coverGlow"></div>
+          <video id="clipVideo" class="clip-video" muted playsinline webkit-playsinline></video>
+          <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
         </div>
-        <div class="cover-bottom">
-          <div class="cover-eyebrow" id="coverEyebrow">// Album I of IV — Aether Odyssey //</div>
-          <div class="cover-title" id="coverTitle">Ignition</div>
-          <div class="cover-tagline" id="coverTagline"></div>
-          <div class="cover-meta" id="coverMeta"></div>
-          <div class="cover-song-note" id="coverSongNote"></div>
-          <canvas class="cover-pulse" id="coverPulse"></canvas>
+        <div class="cover-scrim"></div>
+        <div class="cover-content">
+          <div class="cover-top">
+            <div id="coverNode">NODE: ELYSIUM-PRIMARY</div>
+            <div id="coverArchive">AETHER ODYSSEY // SAGA DOCUMENT ARCHIVE</div>
+          </div>
+          <div class="cover-bottom">
+            <div class="cover-eyebrow" id="coverEyebrow">// Album I of IV — Aether Odyssey //</div>
+            <div class="cover-title" id="coverTitle">Ignition</div>
+            <div class="cover-tagline" id="coverTagline"></div>
+            <div class="cover-meta" id="coverMeta"></div>
+            <div class="cover-song-note" id="coverSongNote"></div>
+            <canvas class="cover-pulse" id="coverPulse"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -1970,6 +1994,15 @@ textPaneToggle.addEventListener('click', () => {
   textPaneToggle.title = collapsed ? 'Show lyrics panel' : 'Hide lyrics panel';
 });
 
+// ── ARTWORK PANEL TOGGLE (desktop) ──
+const coverPaneInner = document.getElementById('coverPaneInner');
+const coverPaneToggle = document.getElementById('coverPaneToggle');
+coverPaneToggle.addEventListener('click', () => {
+  const collapsed = coverPaneInner.classList.toggle('collapsed');
+  coverPaneToggle.textContent = collapsed ? '«' : '»';
+  coverPaneToggle.title = collapsed ? 'Show artwork panel' : 'Hide artwork panel';
+});
+
 // ── FULLSCREEN TOGGLE ──
 const fsBtn = document.getElementById('fullscreenBtn');
 fsBtn.addEventListener('click', () => {
@@ -2078,7 +2111,7 @@ function drawAmbientParticles() {
 }
 
 function applyAmbientParallax() {
-  const kenBurnsScale = 1.06 - (Math.sin(ambientT * 0.045) * 0.5 + 0.5) * 0.06; // slow 1.06 → 1.0 pull-back (zoom out)
+  const kenBurnsScale = 1.06 - (Math.sin(ambientT * 0.08) * 0.5 + 0.5) * 0.06; // faster 1.06 → 1.0 pull-back (zoom out)
   ambientImg.style.transform = `translate(${ambientMouseX * 8}px, ${ambientMouseY * 6}px) scale(${(1.02 + kenBurnsScale - 1).toFixed(4)})`;
   ambientMistCanvas.style.transform = `translate(${ambientMouseX * 16}px, ${ambientMouseY * 12}px)`;
   ambientParticlesCanvas.style.transform = `translate(${ambientMouseX * 28}px, ${ambientMouseY * 20}px)`;
