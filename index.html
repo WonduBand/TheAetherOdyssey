@@ -308,12 +308,13 @@
 
   /* ── COVER PANE ── */
   .cover-pane {
-    position: relative; overflow: hidden; background: #000;
+    position: relative; overflow: hidden;
     border-right: 1px solid var(--border);
     transition: border-color 0.5s ease;
     display: flex; align-items: stretch; justify-content: stretch;
     grid-column: 3;
   }
+  .cover-pane.panel-collapsed { border-right-color: transparent; }
   .cover-img-wrap { position: absolute; inset: 0; }
   .cover-glow {
     position: absolute; inset: 0; pointer-events: none;
@@ -408,13 +409,15 @@
 
   .cover-pane-inner {
     display: flex; flex-direction: column; width: 100%; height: 100%;
-    transition: transform 0.45s ease, opacity 0.4s ease;
+    background: #000;
+    transition: transform 0.45s ease, opacity 0.4s ease, background 0.5s ease;
   }
   @media (min-width: 981px) {
     .cover-pane-inner.collapsed { transform: translateX(40px); opacity: 0; pointer-events: none; }
   }
   .cover-pane-toggle {
-    position: absolute; left: -2.25rem; top: 1rem; z-index: 5;
+    grid-column: 2; align-self: start; justify-self: center;
+    margin-top: 1rem; z-index: 5;
     width: 2.1rem; height: 1.9rem; border-radius: 3px;
     background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-dim);
     font-size: 0.8rem; letter-spacing: 0.02em; cursor: pointer;
@@ -647,8 +650,9 @@
       <div class="sidebar-foot" id="sidebarFoot">⬡ Elysium Archive Project ⬡</div>
     </nav>
 
+    <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">»</button>
+
     <section class="cover-pane">
-      <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">»</button>
       <div class="cover-pane-inner" id="coverPaneInner">
         <div class="cover-img-wrap">
           <img class="cover-img" id="coverImg" src="" alt="">
@@ -1998,8 +2002,10 @@ textPaneToggle.addEventListener('click', () => {
 // ── ARTWORK PANEL TOGGLE (desktop) ──
 const coverPaneInner = document.getElementById('coverPaneInner');
 const coverPaneToggle = document.getElementById('coverPaneToggle');
+const coverPane = document.querySelector('.cover-pane');
 coverPaneToggle.addEventListener('click', () => {
   const collapsed = coverPaneInner.classList.toggle('collapsed');
+  coverPane.classList.toggle('panel-collapsed', collapsed);
   coverPaneToggle.textContent = collapsed ? '«' : '»';
   coverPaneToggle.title = collapsed ? 'Show artwork panel' : 'Hide artwork panel';
 });
