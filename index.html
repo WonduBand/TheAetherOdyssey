@@ -2068,11 +2068,15 @@ const ambientMotes = Array.from({ length: 55 }, () => ({
 }));
 
 // ── Per-album special effects state ──
-const ambientAsteroids = Array.from({ length: 5 }, () => ({
-  x: Math.random(), y: Math.random() * 0.55, size: 7 + Math.random() * 12,
-  speed: 0.015 + Math.random() * 0.02, rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.012,
-  sides: 5 + Math.floor(Math.random() * 3),
-}));
+const ambientAsteroids = Array.from({ length: 5 }, () => {
+  const points = 11 + Math.floor(Math.random() * 4);
+  const bumps = Array.from({ length: points }, () => 0.7 + Math.random() * 0.35);
+  return {
+    x: Math.random(), y: Math.random() * 0.55, size: 8 + Math.random() * 13,
+    speed: 0.015 + Math.random() * 0.02, rot: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.012,
+    points, bumps,
+  };
+});
 let ambientShootingStar = null;
 let ambientShootingTimer = 220;
 
@@ -2194,18 +2198,30 @@ function drawAmbientParticles() {
       if (a.x > 1.1) a.x = -0.1;
       a.rot += a.rotSpeed;
       const cx = a.x * w, cy = a.y * h;
+      const pts = [];
+      for (let i = 0; i < a.points; i++) {
+        const ang = (i / a.points) * Math.PI * 2;
+        const rad = a.size * a.bumps[i];
+        pts.push([Math.cos(ang) * rad, Math.sin(ang) * rad]);
+      }
+      const mid = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(a.rot);
       ctx.beginPath();
-      for (let i = 0; i < a.sides; i++) {
-        const ang = (i / a.sides) * Math.PI * 2;
-        const rad = a.size * (0.75 + 0.25 * Math.sin(i * 2.1));
-        const px = Math.cos(ang) * rad, py = Math.sin(ang) * rad;
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      const start = mid(pts[pts.length - 1], pts[0]);
+      ctx.moveTo(start[0], start[1]);
+      for (let i = 0; i < pts.length; i++) {
+        const next = pts[(i + 1) % pts.length];
+        const m = mid(pts[i], next);
+        ctx.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1]);
       }
       ctx.closePath();
-      ctx.fillStyle = 'rgba(10,8,16,0.55)';
+      const grad = ctx.createLinearGradient(-a.size, -a.size, a.size, a.size);
+      grad.addColorStop(0, 'rgba(60,55,64,0.62)');
+      grad.addColorStop(0.55, 'rgba(24,20,28,0.6)');
+      grad.addColorStop(1, 'rgba(8,6,10,0.6)');
+      ctx.fillStyle = grad;
       ctx.fill();
       ctx.restore();
     });
