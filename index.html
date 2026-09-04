@@ -322,8 +322,26 @@
   .mp-vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
 
   @media (max-width: 700px) {
-    .mp-info { max-width: 100px; }
-    .mp-time { display: none; }
+    .mini-player {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas:
+        "info info info"
+        "progress progress time"
+        "prev play next";
+      align-items: center;
+      row-gap: 0.4rem;
+      column-gap: 0.6rem;
+      padding: 0.6rem 1rem 0.7rem;
+    }
+    .mp-info { grid-area: info; max-width: none; text-align: center; }
+    .mp-title { white-space: normal; text-overflow: clip; }
+    .mp-progress { grid-area: progress; width: 100%; }
+    .mp-time { grid-area: time; display: block; text-align: right; }
+    .mp-btn { grid-area: prev; justify-self: center; }
+    #mpPlayPause { grid-area: play; justify-self: center; }
+    #mpNext { grid-area: next; justify-self: center; }
+    .mp-volume { display: none; }
     .mp-vol-slider { width: 46px; }
   }
 
@@ -1091,7 +1109,7 @@ const tracksAlbum3 = [
     {label:"BRIDGE",type:"bridge",text:`And if another broken world is watching from afar\nIf another frightened species has its eyes upon our star\nLet them see us dancing in the gravity\nLet them know — let them know they can be free`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`We are the stars, we are the sparks\nWe are the fire inside the dark\nWe are the children of the ones who dared\nWe are the proof that somebody cared\nWe are the stars — we always were\nWe are the stars\nWe always were\nWe always were`},
   ]},
-  { title:"Eternal Drift", image:"Album 3/11__Eternal_Drift.png", note:"Year twelve of settlement. On the southern plain, the keel of a new ship is being laid. It is smaller than the Aether, faster, designed for exploration rather than survival. The daughter of one of the original eight thousand is the chief engineer. She has never seen Earth. She has no intention of going there.", sections:[
+  { title:"Eternal Drift", image:"Album 3/11__Eternal_Drift.png", note:"Year twelve of settlement. On the southern plain, the keel of a new ship is being laid. It is smaller than the Aether, faster, designed for exploration rather than survival. The daughter of the chief engineer want's to travel on it one day. She has never seen Earth. She has no intention of going there.", sections:[
     {label:"VERSE_01",type:"verse",text:`They're building a new ship on the southern plain\nMy daughter watched the keel go in today\nShe asked me where it's going\nI said — somewhere we haven't named\nShe said — can I come\nI said — that's why we came`},
     {label:"PRE-CHORUS",type:"pre",text:`The Aether rusts on the ridge above the bay\nSomeone keeps a light burning all the way\nNot for safety — just for memory's sake\nFor the crossing, for the crossing we made`},
     {label:"CHORUS",type:"chorus",text:`Eternal drift — it never ends\nEternal drift — around the bends\nOf every star that waits beyond the known\nWe were never meant to stay in one home\nEternal drift — we carry on\nEternal drift — from star to star we run\nAnd the signal calls forever\nAnd we follow — forever\nAnd we follow`},
@@ -1148,7 +1166,7 @@ const tracksAlbum4 = [
   },
   {
     title: "Stellar Forges", image: "Album 4/04__Stellar_Forge.png",
-    note: "The Dyson Swarm Initiative around Proxima Centauri has been under construction for forty years and reads 47% complete. The lead engineer was born after the vote and will not live to see it finished — she has already enrolled her daughter in the continuation programme. This is what the colony has learned: begin things that outlast any single life.",
+    note: "The Dyson Swarm Initiative around Proxima Centauri has been under construction for forty years and reads 47% complete. The lead engineer was born after the vote and will not live to see it finished — He has already enrolled his daughter in the continuation programme. This is what the colony has learned: begin things that outlast any single life.",
     sections: [
       {label:"VERSE_01",type:"verse",text:`We cracked the star and caught the fire\nWe wrapped a sun in living wire\nThe Forges breathe in million-year shifts\nWhere matter bends and science lifts\n\nNo ore from earth, no rust, no rot —\nThe raw material: light and thought\nWe pour the mold in zero-G\nAnd birth a world for those to be`},
       {label:"CHORUS",type:"chorus",text:`Stellar Forges burning bright!\nHammering the dark with light!\nWe are the makers — forge and flame\nStellar Forges — stake our claim!\nEvery star a place to stand\nEvery orbit — in our hands!`},
@@ -1274,7 +1292,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`We called ourselves the Pantheon\nWe wore the word like a crown we'd earned\nBut a crown means nothing to the ones\nWho were old before the concept burned\nWe are not the first gods\nWe were never the first gods\nWe are the youngest thing in the room\nAnd the room just noticed us`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Awakening of the First — they rise without a sound\nAwakening of the First — the old gods break the ground\nWe are not born of us, not made by us\nJust always here — just always was\nAwakening of the First — the sleepers lift their eyes\nAwakening of the First — and we are small beneath the skies\nWe are small — we are small — we are small`},
   ]},
-  { title:"Throne of Stars", image:"Album 5/03__Throne_of_Stars.png", note:"Before the full weight of the Ancients' return is understood, the Pantheon convenes a celebration — a defiant, glorious reassertion of everything they've built. It is the last moment of unclouded confidence the saga will have for a long time.", sections:[
+  { title:"Throne of Stars", image:"Album 5/03__Throne_of_Stars.png", note:"Before the full weight of the Ancients' return is understood, the Pantheon convenes a celebration — a defiant, glorious reassertion of everything they've built. It is the last moment of unclouded confidence they will have for a long time.", sections:[
     {label:"VERSE_01",type:"verse",text:`We built a throne out of dying suns\nWe wear the dark like it's ours to keep\nWe came from ash, we came from grief\nNow the stars themselves know our name`},
     {label:"PRE-CHORUS",type:"pre",text:`Let them come and let them see\nWhat eight thousand desperate souls became\nWe are not asking for permission\nWe are not whispering our name`},
     {label:"CHORUS",type:"chorus",text:`Throne of stars — we sit upon the dark\nThrone of stars — we are the burning mark\nNo apology, no bowing down\nWe built this crown, we wear this crown\nThrone of stars — the galaxy is our floor\nThrone of stars — we don't need gods anymore\nWe ARE the gods — throne of stars`},
@@ -1304,7 +1322,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`(spoken/half-sung, overlapping voices representing the fractured council)\n"We should kneel—"\n"We should fight—"\n"We should ask forgiveness—"\n"We owe them nothing—"\n"We were desperate—"\n"We were RIGHT—"\nOne verdict. A thousand answers.\nThis is the night the throne first cracked.`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Judgment of the veil — we did not ask for this\nJudgment of the veil — but here it is\nWe are not gods, we are not guests\nWe are something the old world never quite finished\nJudgment of the veil — the verdict stands\nJudgment of the veil — but we won't take it lying down`},
   ]},
-  { title:"Fractured Divinity", image:"Album 5/06__Fractured_Divinity.png", note:"In the weeks following the Judgment, the unity of the ascended fractures into open ideological war — not yet with the Ancients, but with each other. Some worlds vote to renounce ascension entirely. Others double down, declaring the Ancients' judgment itself proof of their obsolescence. This is the Pantheon's darkest, most inward-looking track.", sections:[
+  { title:"Fractured Divinity", image:"Album 5/06__Fractured_Divinity.png", note:"In the weeks following the Judgment, the unity of the ascended fractures into open ideological war — not yet with the Ancients, but with each other. Some worlds vote to renounce ascension entirely. Others double down, declaring the Ancients' judgment itself proof of their obsolescence. This is the Pantheon's darkest, most inward-looking moment.", sections:[
     {label:"VERSE_01",type:"verse",text:`Elysium argues with New Olympus\nThe Forge worlds go dark and refuse to speak\nSome are ripping the Signal from their veins\nSome scream the old gods' judgment is insane`},
     {label:"PRE-CHORUS",type:"pre",text:`How do you hold a species together\nWhen even godhood couldn't make us one\nWe survived the drift, we survived the dying —\nCan we survive what we've become?`},
     {label:"CHORUS",type:"chorus",text:`Fractured divinity — the cracks run deep\nFractured divinity — we can't agree\nSome want to kneel and some want to burn\nFractured divinity — which way do we turn?\nWe built one throne with eight thousand hands\nNow every hand wants a different plan\nFractured divinity — hold on — hold on`},
@@ -1314,7 +1332,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`Maybe the Ancients didn't need to attack us\nMaybe the judgment was the only blade they'd need\nMaybe the surest way to break a pantheon\nIs just to make it doubt itself and bleed`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Fractured divinity — the cracks run deep\nFractured divinity — but hear me speak:\nWe didn't cross the black to break apart\nWe didn't build this throne to lose our heart\nFractured divinity — choose a side\nFractured divinity — but survive\nSurvive — survive — survive`},
   ]},
-  { title:"Shatter the Veil", image:"Album 5/07__Shatter_the_Veil.png", note:"While the Pantheon argues, one faction of Ancients loses patience. The ancient barrier separating their dormant dimension from the Pantheon's expanding reality — a boundary the Ancients themselves built eons ago to let younger life develop undisturbed — is torn open by force. What pours through is not diplomacy. This is the album's structural pivot: internal conflict becomes external catastrophe.", sections:[
+  { title:"Shatter the Veil", image:"Album 5/07__Shatter_the_Veil.png", note:"While the Pantheon argues, one faction of Ancients loses patience. The ancient barrier separating their dormant dimension from the Pantheon's expanding reality — a boundary the Ancients themselves built eons ago to let younger life develop undisturbed — is torn open by force. What pours through is not diplomacy.", sections:[
     {label:"VERSE_01",type:"verse",text:`There was a wall older than language\nA membrane between what wakes and what sleeps\nSomething on the other side got tired\nAnd simply tore the whole wall wide`},
     {label:"PRE-CHORUS",type:"pre",text:`No alarm could have prepared us\nNo simulation ran this deep\nThe oldest door in the universe\nJust came off its hinge`},
     {label:"CHORUS",type:"chorus",text:`Shatter the veil — the old wall breaks\nShatter the veil — the sky itself shakes\nEverything we built to keep them out\nWasn't built to hold, it was built to doubt\nShatter the veil — there's no going back\nShatter the veil — the war has cracked\nThrough the black — through the black —\nShatter the veil`},
@@ -1324,7 +1342,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`(heavy, industrial breakdown)\nNo more council — no more vote\nNo more question of what we chose\nThe wall is gone — the wall is gone —\nThere is only what comes next`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Shatter the veil — the old wall breaks\nShatter the veil — there's no debate\nEverything we built to keep this out\nIs burning now — there is no doubt\nShatter the veil — we're in it now\nShatter the veil — there's no way out\nThrough the black — through the black —\nThe veil is gone`},
   ]},
-  { title:"Gods at War", image:"Album 5/08__Gods_at_War.png", note:"Open, full-scale conflict erupts. Pantheon fleets and ascended minds clash directly with the hostile faction of Ancients across a dozen fronts simultaneously. This is the album's biggest, most anthemic war track — not triumphant yet, but defiant.", sections:[
+  { title:"Gods at War", image:"Album 5/08__Gods_at_War.png", note:"Open, full-scale conflict erupts. Pantheon fleets and ascended minds clash directly with the hostile faction of Ancients across a dozen fronts simultaneously. Neither side yields, and the fate of entire civilizations hangs in the balance.", sections:[
     {label:"VERSE_01",type:"verse",text:`Twelve fronts lit up in a single breath\nEvery ring-world turns into a wall of light\nThere's no scripture for a war with your makers\nBut learning to survive became the thing that saves us`},
     {label:"PRE-CHORUS",type:"pre",text:`Stand at the line — stand at the line\nEvery ascended hand becomes a blade\nWe are not what we used to be\nWe are not afraid — we are not afraid`},
     {label:"CHORUS",type:"chorus",text:`Gods at war — the heavens catch fire\nGods at war — we won't back down\nEvery star a battlefield, every void a choir\nGods at war — we hold the ground\nWe didn't ask to be the ones who'd fight\nThe ones who came before us in the light\nGods at war — GODS AT WAR`},
@@ -1334,7 +1352,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`For the ones on the Aether who never saw this\nFor the ones who forged the first ark with their hands\nThis is not the future they were dreaming of\nBut it's the one we have to stand\nFor Elysium — for the New Olympus rings\nFor every seed we sent into the black\nWe didn't come this far to kneel\nWe didn't come this far to turn back`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Gods at war — the heavens catch fire\nGods at war — we won't back down\nEvery star a battlefield, every void a choir\nGods at war — we hold the ground\nWhatever we are, whoever made us first\nWe will not go quietly into that dark\nGods at war — GODS AT WAR\nGODS AT WAR`},
   ]},
-  { title:"The Devourer Awakens", image:"Album 5/09__The_Devourer_Awakens.png", note:"Not every Ancient wants dialogue or judgment. The most destructive of them all — a being the Pantheon's scientists have no framework to describe, only a name born of terror: the Devourer — fully wakes and begins consuming entire star systems, seeded worlds, and the light itself. This is the album's darkest, heaviest track.", sections:[
+  { title:"The Devourer Awakens", image:"Album 5/09__The_Devourer_Awakens.png", note:"Not every Ancient wants dialogue or judgment. The most destructive of them all — a being the Pantheon's scientists have no framework to describe, only a name born of terror: the Devourer — fully wakes and begins consuming entire star systems, seeded worlds, and the light itself.", sections:[
     {label:"VERSE_01",type:"verse",text:`It doesn't fight — it doesn't posture\nIt just opens like a wound in physics\nA star system with forty million people\nGone in the time it takes to scream`},
     {label:"PRE-CHORUS",type:"pre",text:`This isn't judgment, this isn't justice\nThis is hunger with no name\nThis is the thing under the Ancients\nThat even the Ancients are afraid to claim`},
     {label:"CHORUS",type:"chorus",text:`The Devourer wakes — and the light goes out\nThe Devourer wakes — and there's no way to shout\nLoud enough, far enough, fast enough now\nThe Devourer wakes — and the stars go down\nThis is not a war we can win with pride\nThis is a hunger with the universe inside\nThe Devourer wakes — RUN`},
@@ -1354,7 +1372,7 @@ const tracksAlbum5 = [
     {label:"BRIDGE",type:"bridge",text:`We are not the gods who wrote the first rule\nWe are the gods who have to write the next one bare-handed\nWe are not asking to be forgiven\nWe are asking to be what comes after this — understood, not pardoned`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Council of the gods — the vote is in\nCouncil of the gods — the war begins\nNot for the throne, not for the crown\nFor every seed we've placed in the ground\nCouncil of the gods — we choose to fight\nCouncil of the gods — into the night`},
   ]},
-  { title:"Into the Breach", image:"Album 5/11__Into_the_Breach.png", note:"The vote is finalized. The Pantheon, fractured, frightened, and grieving, commits fully to war — not out of hubris this time, but out of resolve. Every remaining ascended mind, every ring-world's arsenal, every colony's will is turned toward one irreversible act. The album's closing statement before the instrumental.", sections:[
+  { title:"Into the Breach", image:"Album 5/11__Into_the_Breach.png", note:"The vote is finalized. The Pantheon, fractured, frightened, and grieving, commits fully to war — not out of hubris this time, but out of resolve. Every remaining ascended mind, every ring-world's arsenal, every colony's will is turned toward one irreversible act.", sections:[
     {label:"VERSE_01",type:"verse",text:`No more council, no more question\nEvery ring-world, every ascended mind\nTurns as one toward the spark\nWe will cross this too, whatever the cost, today`},
     {label:"PRE-CHORUS",type:"pre",text:`Every hand that built the Ark\nEvery hand that raised the throne\nEvery hand that's left is raised as one\nInto the fire, into the unknown`},
     {label:"CHORUS",type:"chorus",text:`Into the breach — we go as one\nInto the breach — the war's begun\nNot for the crown, not for the pride\nFor every world, for every life inside\nInto the breach — no looking back\nInto the breach — we won't retract\nWe are the Pantheon — INTO THE BREACH`},
