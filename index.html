@@ -324,23 +324,23 @@
   @media (max-width: 700px) {
     .mini-player.active {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: auto auto auto 1fr auto;
       grid-template-areas:
-        "info info info"
-        "progress progress time"
-        "prev play next";
+        "info info info info info"
+        "prev play next progress time";
       align-items: center;
-      row-gap: 0.4rem;
+      row-gap: 0.5rem;
       column-gap: 0.6rem;
       padding: 0.6rem 1rem 0.7rem;
     }
-    .mp-info { grid-area: info; max-width: none; text-align: center; }
-    .mp-title { white-space: normal; text-overflow: clip; }
+    .mp-info { grid-area: info; max-width: none; display: flex; align-items: baseline; gap: 0.5rem; }
+    .mp-title { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .mp-album { margin-top: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .mp-btn { grid-area: prev; }
+    #mpPlayPause { grid-area: play; }
+    #mpNext { grid-area: next; }
     .mp-progress { grid-area: progress; width: 100%; }
-    .mp-time { grid-area: time; display: block; text-align: right; }
-    .mp-btn { grid-area: prev; justify-self: center; }
-    #mpPlayPause { grid-area: play; justify-self: center; }
-    #mpNext { grid-area: next; justify-self: center; }
+    .mp-time { grid-area: time; display: block; }
     .mp-volume { display: none; }
     .mp-vol-slider { width: 46px; }
   }
