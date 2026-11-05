@@ -469,16 +469,31 @@
   .cover-meta span { color: var(--accent); transition: color 0.5s ease; }
   .cover-pulse { width: 100%; height: 52px; margin-top: 0.8rem; display:block; }
 
-  /* ── COVER ANIMATION CLIP (plays inline inside the artwork frame) ── */
+  /* ── COVER ANIMATION CLIP (plays inline inside the artwork frame) ──
+     Same film-strip chrome as .row-video-btn: accent border, neon glow, SVG glyph.
+     A dark plate sits under the gradient so the icon stays readable on artwork. */
   .cover-clip-btn {
     position: absolute; right: 1rem; bottom: 1rem; z-index: 6;
-    width: 2.4rem; height: 2.4rem; border-radius: 50%;
-    background: rgba(40,0,0,0.6); border: 1px solid #ff3b3b;
-    color: #ff5c5c; font-size: 1.1rem; cursor: pointer;
+    width: 2.85rem; height: 2.2rem; padding: 0;
+    border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--accent-deep); color: var(--accent);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.28)),
+      color-mix(in srgb, var(--bg) 78%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 22%, transparent);
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    transition: transform 0.15s ease, box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease;
   }
-  .cover-clip-btn:hover { background: rgba(80,0,0,0.85); border-color: #ff6b6b; color: #ff8080; transform: scale(1.06); }
+  .cover-clip-btn svg { width: 18px; height: 14px; display: block; }
+  .cover-clip-btn.is-close svg { width: 14px; height: 14px; }
+  .cover-clip-btn:hover, .cover-clip-btn:focus-visible {
+    border-color: var(--accent); color: var(--accent-pale); outline: none;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+    transform: scale(1.06);
+  }
+  .cover-clip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cover-clip-btn:active { transform: scale(0.9); }
   .cover-pane.track-selected .cover-clip-btn { display: none; }
 
   .clip-video {
@@ -937,6 +952,12 @@
       width: 100%; height: 48px; margin: 0;
       display: block;
     }
+    .cover-clip-btn {
+      width: 44px; height: 44px;
+      right: 0.7rem; bottom: 0.7rem;
+    }
+    .cover-clip-btn svg { width: 20px; height: 16px; }
+    .cover-clip-btn.is-close svg { width: 16px; height: 16px; }
     .np-transport {
       display: flex; flex-direction: column; gap: 0.45rem;
       flex: 0 0 auto;
@@ -1335,7 +1356,8 @@
     .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom { animation: none !important; }
     body::after, .mini-player::after, .fx-flash, .fx-spot { display: none !important; }
     .loading-log div { opacity: 1; clip-path: none; }
-    .cover-img, .track-row::before, .track-row .t-title, .album-tab, .loading-screen, .mp-progress, .mp-vol-slider { transition: none !important; }
+    .cover-img, .track-row::before, .track-row .t-title, .album-tab, .loading-screen, .mp-progress, .mp-vol-slider,
+    .mp-progress::-webkit-slider-runnable-track { transition: none !important; }
     .cover-img.swap { transform: none; filter: none; }
     .album-tab:hover, .track-row:hover .t-title { transform: none; }
     .sidebar, .cover-pane, .text-pane { transition: none !important; }
@@ -1350,16 +1372,45 @@
       box-shadow: 0 0 0 2px var(--accent), 0 8px 20px rgba(0,0,0,0.5);
     }
     .track-row:hover .t-title { transform: none; }
+    /* Tall hit target, slim track. The FX pack paints .mp-progress as a full-height
+       bordered glow; on a 28px control that reads as a light-blue rectangle. */
     .mini-player .mp-progress, .np-transport .mp-progress {
-      height: 28px;
-      background-repeat: no-repeat;
-      background-position: left center, left center;
-      background-size: var(--fill, 0%) 4px, 100% 4px;
+      -webkit-appearance: none; appearance: none;
+      height: 28px; margin: 0; padding: 0;
+      border: 0; border-radius: 0;
+      background: transparent; background-image: none;
+      box-shadow: none;
+    }
+    .mini-player .mp-progress:hover, .np-transport .mp-progress:hover { box-shadow: none; }
+    .mini-player .mp-progress::-webkit-slider-runnable-track,
+    .np-transport .mp-progress::-webkit-slider-runnable-track {
+      height: 4px; border: 0; border-radius: 999px;
+      background:
+        linear-gradient(90deg, var(--accent-deep), var(--accent)) 0 0 / var(--fill, 0%) 100% no-repeat,
+        var(--border);
+      box-shadow: none;
+      transition: background-size 0.3s linear;
     }
     .mini-player .mp-progress::-webkit-slider-thumb,
-    .np-transport .mp-progress::-webkit-slider-thumb { width: 16px; height: 16px; }
+    .np-transport .mp-progress::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; margin-top: -6px;
+      border: 0; border-radius: 50%; background: var(--accent);
+    }
+    .mini-player .mp-progress::-moz-range-track,
+    .np-transport .mp-progress::-moz-range-track {
+      height: 4px; border: 0; border-radius: 999px;
+      background: var(--border); box-shadow: none;
+    }
+    .mini-player .mp-progress::-moz-range-progress,
+    .np-transport .mp-progress::-moz-range-progress {
+      height: 4px; border: 0; border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+    }
     .mini-player .mp-progress::-moz-range-thumb,
-    .np-transport .mp-progress::-moz-range-thumb { width: 16px; height: 16px; }
+    .np-transport .mp-progress::-moz-range-thumb {
+      width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent);
+    }
   }
   @media (max-width: 980px) and (prefers-reduced-motion: reduce) {
     .album-tabs { scroll-behavior: auto; }
@@ -1424,7 +1475,7 @@
           <img class="cover-img" id="coverImg" src="" alt="">
           <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
           <video id="clipVideo" class="clip-video" muted playsinline webkit-playsinline></video>
-          <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
+          <button type="button" class="cover-clip-btn" id="coverClipBtn" title="Play cover animation" aria-label="Play cover animation" aria-pressed="false"><svg viewBox="0 0 15 12" aria-hidden="true"><rect x="0.75" y="0.75" width="13.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.6 0.9v10.2M12.4 0.9v10.2" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.1 1.1" opacity="0.7"/><path d="M6 3.6v4.8L9.6 6z" fill="currentColor"/></svg></button>
         </div>
         <div class="cover-scrim"></div>
         <div class="cover-content">
@@ -2247,6 +2298,7 @@ const typeToClass = {
 // ── ALBUM METADATA ──
 // Film-frame-with-play icon for rows that have a music video
 const VIDEO_ICON_SVG = '<svg viewBox="0 0 15 12" aria-hidden="true"><rect x="0.75" y="0.75" width="13.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.6 0.9v10.2M12.4 0.9v10.2" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.1 1.1" opacity="0.7"/><path d="M6 3.6v4.8L9.6 6z" fill="currentColor"/></svg>';
+const COVER_CLOSE_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"/></svg>';
 
 const ALBUMS = {
   1: {
@@ -3363,13 +3415,21 @@ function forceMuted() {
   clipVideo.addEventListener(evt, forceMuted);
 });
 
+function setCoverClipOpen(open) {
+  coverClipBtn.innerHTML = open ? COVER_CLOSE_SVG : VIDEO_ICON_SVG;
+  coverClipBtn.classList.toggle('is-close', open);
+  const label = open ? 'Close animation' : 'Play cover animation';
+  coverClipBtn.title = label;
+  coverClipBtn.setAttribute('aria-label', label);
+  coverClipBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+}
+
 function playCoverClip() {
   const src = `Album ${state.album}/Cover${state.album}_Clip.mp4`;
   clipVideo.src = src;
   forceMuted();
   clipVideo.classList.add('active');
-  coverClipBtn.textContent = '✕';
-  coverClipBtn.title = 'Close animation';
+  setCoverClipOpen(true);
   clipVideo.play().catch(err => console.warn('Cover clip playback failed — check the file exists:', src, err));
 }
 
@@ -3378,8 +3438,7 @@ function stopCoverClip() {
   clipVideo.removeAttribute('src');
   clipVideo.load();
   clipVideo.classList.remove('active');
-  coverClipBtn.textContent = '🎥';
-  coverClipBtn.title = 'Play cover animation';
+  setCoverClipOpen(false);
 }
 
 coverClipBtn.addEventListener('click', () => {
