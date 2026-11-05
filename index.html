@@ -524,6 +524,13 @@
     .cover-img, .cover-fallback { z-index: 1; }
     .cover-img { position: relative; object-fit: contain; object-position: 50% 0%; }
     .clip-video { object-fit: contain; object-position: 50% 0%; background: transparent; }
+    /* Square cover is top-centered in the pane. Anchor the clip control to that
+       plate (not the pane's bottom) so it stays on the art above the title band. */
+    .cover-pane-inner { container-type: size; }
+    .cover-clip-btn {
+      right: calc((100cqw - min(100cqw, 100cqh)) / 2 + 0.9rem);
+      bottom: calc(100cqh - min(100cqw, 100cqh) + 0.9rem);
+    }
     .clip-video.active { z-index: 3; }
     /* While the clip plays, it owns the frame: hide the overlay text so only the
        clip + blurred art band remain (the old full-bleed video hid it too). */
@@ -908,6 +915,7 @@
       flex: 1 1 auto; min-height: 9.5rem;
       width: 100%; overflow: hidden;
       background: #000;
+      container-type: size;
     }
     .cover-img {
       position: absolute; inset: 0;
@@ -954,7 +962,9 @@
     }
     .cover-clip-btn {
       width: 44px; height: 44px;
-      right: 0.7rem; bottom: 0.7rem;
+      /* Art is centered in the stage (object-position: center). Sit on that square. */
+      right: calc((100cqw - min(100cqw, 100cqh)) / 2 + 0.7rem);
+      bottom: calc((100cqh - min(100cqw, 100cqh)) / 2 + 0.7rem);
     }
     .cover-clip-btn svg { width: 20px; height: 16px; }
     .cover-clip-btn.is-close svg { width: 16px; height: 16px; }
