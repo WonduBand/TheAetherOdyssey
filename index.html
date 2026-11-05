@@ -253,6 +253,71 @@
     .sidebar-foot { display: none; }
   }
 
+  /* ── TRACK VIDEO BUTTON (rows with a `youtube` id) ── */
+  .row-video-btn {
+    flex-shrink: 0; width: 1.75rem; height: 1.35rem; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--accent-deep); color: var(--accent);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.2));
+    box-shadow: 0 0 8px rgba(77,184,255,0.15);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 22%, transparent);
+    transition: transform 0.15s ease, box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .row-video-btn svg { width: 15px; height: 12px; display: block; }
+  .row-video-btn:hover, .row-video-btn:focus-visible {
+    border-color: var(--accent); color: var(--accent-pale); outline: none;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .row-video-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row-video-btn:active { transform: scale(0.9); }
+
+  /* ── VIDEO OVERLAY ── */
+  .video-modal {
+    position: fixed; inset: 0; z-index: 20000;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(0.8rem, 4vw, 3rem);
+    opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  }
+  .video-modal.open { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+  .video-modal-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.78);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .video-modal-frame {
+    position: relative; width: min(100%, 1100px, calc((100vh - 9rem) * 16 / 9));
+    background: var(--bg-panel); border: 1px solid var(--accent-deep); border-radius: 6px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(77,184,255,0.2);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 40px color-mix(in srgb, var(--accent) 30%, transparent), inset 0 0 0 1px rgba(255,255,255,0.03);
+    transform: translateY(14px) scale(0.97); transition: transform 0.35s cubic-bezier(.2,.9,.3,1.1);
+    overflow: hidden;
+  }
+  .video-modal.open .video-modal-frame { transform: none; }
+  .video-modal-head {
+    display: flex; align-items: center; gap: 0.8rem;
+    padding: 0.7rem 0.8rem 0.7rem 1.1rem; border-bottom: 1px solid var(--border);
+  }
+  .video-modal-eyebrow { font-family:'Share Tech Mono',monospace; font-size: 0.55rem; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; white-space: nowrap; }
+  .video-modal-title {
+    flex: 1; min-width: 0; font-family:'Rajdhani',sans-serif; font-weight: 700; letter-spacing: 0.1em;
+    font-size: 1rem; text-transform: uppercase; color: var(--accent-pale);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .video-modal-close {
+    flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--text-dim);
+    font-size: 1.1rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .video-modal-close:hover, .video-modal-close:focus-visible {
+    border-color: var(--accent); color: var(--accent); outline: none;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .video-modal-player { position: relative; aspect-ratio: 16 / 9; background: #000; }
+  .video-modal-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  @media (max-width: 600px) { .video-modal-eyebrow { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .video-modal, .video-modal-frame { transition: none !important; } }
+
   /* ── PLAY BUTTONS & NOW-PLAYING STATE ── */
   .row-play-btn {
     flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%;
@@ -426,6 +491,32 @@
     .clip-video { object-fit: contain; }
   }
 
+  /* ── ADAPTIVE ARTWORK (desktop) ──
+     The art is square, but the pane's shape changes with the rails (tall when both
+     panels are open, wide when lyrics are hidden). Show the whole image with
+     object-fit:contain, pinned to the top so the title block sits in the band
+     below, and fill the leftover band with a blurred, dimmed copy of the same art. */
+  .cover-backdrop { display: none; }
+  @media (min-width: 981px) {
+    .cover-backdrop {
+      display: block; position: absolute; inset: -48px; z-index: 0;
+      background-size: cover; background-position: center; background-repeat: no-repeat;
+      filter: blur(30px) saturate(1.3) brightness(0.55);
+      transform: scale(1.08);
+      opacity: 1; transition: opacity 0.4s ease;
+    }
+    .cover-backdrop.swap { opacity: 0; }
+    .cover-img, .cover-fallback, .cover-glow { z-index: 1; }
+    .cover-img { position: relative; object-fit: contain; object-position: 50% 0%; }
+    .clip-video { object-fit: contain; object-position: 50% 0%; background: transparent; }
+    .clip-video.active { z-index: 3; }
+    /* While the clip plays, it owns the frame: hide the overlay text so only the
+       clip + blurred art band remain (the old full-bleed video hid it too). */
+    .cover-content, .cover-scrim { transition: opacity 0.3s ease; }
+    .cover-pane-inner:has(.clip-video.active) .cover-content,
+    .cover-pane-inner:has(.clip-video.active) .cover-scrim { opacity: 0; pointer-events: none; }
+  }
+
   /* ── TEXT PANE ── */
   .text-pane {
     display: flex; flex-direction: column; min-height: 0;
@@ -436,18 +527,6 @@
     display: flex; flex-direction: column; min-height: 0; flex: 1;
     background: var(--bg); transition: background 0.5s ease, transform 0.45s ease, opacity 0.4s ease;
   }
-  @media (min-width: 981px) {
-    .text-pane-inner.collapsed { transform: translateX(-100%); opacity: 0; pointer-events: none; }
-  }
-  .text-pane-toggle {
-    position: absolute; left: -2.45rem; top: 1rem; z-index: 5;
-    width: 2.1rem; height: 1.9rem; border-radius: 3px;
-    background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-dim);
-    font-size: 0.8rem; letter-spacing: 0.02em; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-  }
-  .text-pane-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
   .cover-pane-inner {
     display: flex; flex-direction: column; width: 100%;
@@ -457,24 +536,141 @@
   @media (min-width: 981px) {
     .cover-pane-inner { height: 100%; }
   }
+  /* ── PANEL EDGE RAILS + COLLAPSE (desktop) ──
+     .app-main carries data-cover-collapsed / data-lyrics-collapsed; the grid
+     itself animates so hidden panels give their space back to the others.
+     Col 2 = artwork rail, col 4 = lyrics rail (always visible, so a panel can
+     always be re-opened). Both panels can be hidden at once to reveal the
+     ambient wallpaper; the sidebar stays 300px. */
   @media (min-width: 981px) {
-    .cover-pane-inner.collapsed { transform: translateX(-100%); opacity: 0; pointer-events: none; }
+    .app-main {
+      --rail-w: 2.6rem;
+      --pane-ease: cubic-bezier(.65,.05,.25,1);
+      grid-template-columns: 300px var(--rail-w) minmax(0,1.15fr) var(--rail-w) minmax(0,1fr);
+      transition: grid-template-columns 0.45s var(--pane-ease);
+    }
+    .app-main[data-cover-collapsed] {
+      grid-template-columns: 300px var(--rail-w) minmax(0,0fr) var(--rail-w) minmax(0,1fr);
+    }
+    .app-main[data-lyrics-collapsed] {
+      grid-template-columns: 300px var(--rail-w) minmax(0,1.15fr) var(--rail-w) minmax(0,0fr);
+    }
+    /* Both hidden: content columns fold to 0, rails stay put next to the sidebar,
+       and the rest of the stage is left empty so the ambient wallpaper shows. */
+    .app-main[data-cover-collapsed][data-lyrics-collapsed] {
+      grid-template-columns: 300px var(--rail-w) minmax(0,0fr) var(--rail-w) minmax(0,0fr);
+    }
+    .cover-pane, .text-pane { min-width: 0; overflow: hidden; }
+    .cover-pane { border-right: none; }
+
+    /* Inner content keeps its last width while the column folds (no reflow jank),
+       then fades/drifts as secondary polish. */
+    .cover-pane-inner.width-locked, .text-pane-inner.width-locked {
+      width: var(--lock-w); min-width: var(--lock-w); flex: 0 0 auto;
+    }
+    .cover-pane-inner, .text-pane-inner {
+      transition: transform 0.45s var(--pane-ease), opacity 0.35s ease, filter 0.45s ease, background 0.5s ease;
+    }
+    .cover-pane-inner.collapsed { transform: translateX(-4%) scale(0.985); opacity: 0; filter: blur(3px); pointer-events: none; }
+    .text-pane-inner.collapsed  { transform: translateX(4%) scale(0.985);  opacity: 0; filter: blur(3px); pointer-events: none; }
   }
-  .cover-pane-toggle {
-    grid-column: 2; align-self: start; justify-self: center;
-    margin-top: 1rem; z-index: 5;
-    width: 2.1rem; height: 1.9rem; border-radius: 3px;
-    background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-dim);
-    font-size: 0.8rem; letter-spacing: 0.02em; cursor: pointer;
+
+  .pane-rail {
+    position: relative; z-index: 5;
+    align-self: stretch; justify-self: stretch;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    padding: 0; margin: 0; border: none; background: transparent;
+    cursor: pointer; color: var(--text-dim);
+    -webkit-tap-highlight-color: transparent;
   }
-  .cover-pane-toggle:hover { border-color: var(--accent); color: var(--accent); }
-  @media (max-width: 980px) {
-    .cover-pane-toggle { display: none; }
+  .cover-pane-toggle { grid-column: 2; grid-row: 1; }
+  .text-pane-toggle  { grid-column: 4; grid-row: 1; }
+  .pane-rail:focus { outline: none; }
+
+  /* 1px accent seam running the full height of the rail */
+  .pane-rail::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px;
+    transform: translateX(-0.5px);
+    background: linear-gradient(180deg, transparent 0%, var(--accent-deep) 22%, var(--accent) 50%, var(--accent-deep) 78%, transparent 100%);
+    opacity: 0.45; transition: opacity 0.4s ease, background 0.5s ease;
+    pointer-events: none;
+  }
+  .pane-rail[aria-expanded="false"]::before { opacity: 0.18; }
+  .pane-rail:hover::before, .pane-rail:focus-visible::before { opacity: 0.85; }
+
+  .rail-handle {
+    position: relative; overflow: hidden;
+    width: 30px; min-height: 148px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.55rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.015) 45%, rgba(0,0,0,0.25) 100%), rgba(8,12,22,0.55);
+    -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.45), 0 0 14px rgba(77,184,255,0.12);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.45), 0 0 14px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    transition: transform 0.25s cubic-bezier(.3,1.4,.5,1), box-shadow 0.3s ease, border-color 0.3s ease, color 0.5s ease, min-height 0.3s ease;
+  }
+  /* corner ticks — archive-instrument detailing */
+  .rail-handle::before {
+    content: ''; position: absolute; left: 50%; width: 10px; height: 2px; top: 9px;
+    transform: translateX(-50%); border-radius: 2px;
+    background: var(--accent); opacity: 0.55;
+    box-shadow: 0 calc(148px - 20px) 0 var(--accent);
+    transition: opacity 0.3s ease;
+  }
+  /* light sweep on hover */
+  .rail-handle::after {
+    content: ''; position: absolute; left: -20%; right: -20%; height: 60%; top: -70%;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.22), transparent);
+    transform: skewY(-18deg); pointer-events: none; opacity: 0;
+  }
+  .pane-rail:hover .rail-handle::after, .pane-rail:focus-visible .rail-handle::after {
+    animation: railSweep 0.9s ease forwards;
+  }
+  @keyframes railSweep { 0% { top: -70%; opacity: 0; } 20% { opacity: 1; } 100% { top: 120%; opacity: 0; } }
+
+  .rail-chev {
+    width: 14px; height: 22px; display: block; flex-shrink: 0;
+    filter: drop-shadow(0 0 4px var(--accent));
+    transition: transform 0.45s cubic-bezier(.65,.05,.25,1), filter 0.3s ease;
+  }
+  .rail-chev path { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .rail-chev .chev-ghost { opacity: 0.4; }
+  .pane-rail[aria-expanded="false"] .rail-chev { transform: rotate(180deg); }
+
+  .rail-label {
+    writing-mode: vertical-rl; text-orientation: mixed;
+    font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; letter-spacing: 0.32em;
+    text-transform: uppercase; color: var(--accent-pale);
+    max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease;
+  }
+  .pane-rail:hover .rail-label, .pane-rail:focus-visible .rail-label,
+  .pane-rail[aria-expanded="false"] .rail-label { max-height: 6rem; opacity: 0.9; }
+
+  .pane-rail:hover .rail-handle, .pane-rail:focus-visible .rail-handle {
+    transform: scale(1.06);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 8px 22px rgba(0,0,0,0.5), 0 0 22px rgba(77,184,255,0.35);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 8px 22px rgba(0,0,0,0.5), 0 0 24px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 48px color-mix(in srgb, var(--accent-deep) 35%, transparent), inset 0 0 14px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .pane-rail:hover .rail-chev { filter: drop-shadow(0 0 7px var(--accent)); }
+  .pane-rail:active .rail-handle { transform: scale(0.95); transition-duration: 0.08s; }
+  .pane-rail:focus-visible .rail-handle { outline: 2px solid var(--accent); outline-offset: 3px; }
+  /* collapsed rail: slight idle breathing so the way back is discoverable */
+  .pane-rail[aria-expanded="false"] .rail-handle { border-color: var(--accent-deep); animation: railBreathe 3.2s ease-in-out infinite; }
+  .pane-rail[aria-expanded="false"]:hover .rail-handle { animation: none; }
+  @keyframes railBreathe {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.45), 0 0 10px color-mix(in srgb, var(--accent) 18%, transparent); }
+    50%      { box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 6px 18px rgba(0,0,0,0.45), 0 0 22px color-mix(in srgb, var(--accent) 45%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-main, .cover-pane-inner, .text-pane-inner, .rail-handle, .rail-chev { transition: none !important; }
+    .rail-handle, .rail-handle::after { animation: none !important; }
   }
   @media (max-width: 980px) {
-    .text-pane-toggle { display: none; }
+    .pane-rail { display: none; }
   }
   .text-head {
     padding: 1rem 1.6rem 0.8rem; border-bottom: 1px solid var(--border);
@@ -503,7 +699,9 @@
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
     .cover-pane.track-selected .cover-song-note { display: block; }
-    .text-pane { max-width: 640px; justify-self: start; }
+    /* Lyrics never wider than a comfortable reading measure; any extra column
+       width (e.g. artwork hidden) stays open wallpaper beside the panel. */
+    .text-pane { width: 100%; max-width: min(100%, 40rem); justify-self: start; }
   }
 
   .track-note {
@@ -702,11 +900,12 @@
       <div class="sidebar-foot" id="sidebarFoot">⬡ Elysium Archive Project ⬡</div>
     </nav>
 
-    <button class="cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel">«</button>
+    <button type="button" class="pane-rail cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel" aria-label="Hide artwork panel" aria-controls="coverPaneInner" aria-expanded="true"><span class="rail-handle"><svg class="rail-chev" viewBox="0 0 14 22" aria-hidden="true"><path d="M9.5 5 L4 11 L9.5 17"/><path class="chev-ghost" d="M13 5 L7.5 11 L13 17"/></svg><span class="rail-label">Art</span></span></button>
 
     <section class="cover-pane">
       <div class="cover-pane-inner" id="coverPaneInner">
         <div class="cover-img-wrap">
+          <div class="cover-backdrop" id="coverBackdrop" aria-hidden="true"></div>
           <img class="cover-img" id="coverImg" src="" alt="">
           <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
           <div class="cover-glow" id="coverGlow"></div>
@@ -732,8 +931,9 @@
       </div>
     </section>
 
+    <button type="button" class="pane-rail text-pane-toggle" id="textPaneToggle" title="Hide lyrics panel" aria-label="Hide lyrics panel" aria-controls="textPaneInner" aria-expanded="true"><span class="rail-handle"><svg class="rail-chev" viewBox="0 0 14 22" aria-hidden="true"><path d="M9.5 5 L4 11 L9.5 17"/><path class="chev-ghost" d="M13 5 L7.5 11 L13 17"/></svg><span class="rail-label">Lyrics</span></span></button>
+
     <section class="text-pane" id="textPane">
-      <button class="text-pane-toggle" id="textPaneToggle" title="Hide lyrics panel">«</button>
       <div class="text-pane-inner" id="textPaneInner">
         <div class="text-head">
           <button class="text-nav-btn" id="prevBtn" title="Previous track"><span class="icon icon-tri-left"></span></button>
@@ -772,6 +972,18 @@
   </div>
 </div>
 
+<div class="video-modal" id="videoModal" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle" aria-hidden="true">
+  <div class="video-modal-backdrop" data-close-video></div>
+  <div class="video-modal-frame">
+    <div class="video-modal-head">
+      <span class="video-modal-eyebrow">// Transmission</span>
+      <span class="video-modal-title" id="videoModalTitle"></span>
+      <button type="button" class="video-modal-close" id="videoModalClose" title="Close video (Esc)" aria-label="Close video">✕</button>
+    </div>
+    <div class="video-modal-player" id="videoModalPlayer"></div>
+  </div>
+</div>
+
 <script>
 // ── ALBUM 1 DATA ──
 const tracksAlbum1 = [
@@ -805,7 +1017,7 @@ const tracksAlbum1 = [
     {label:"BRIDGE",type:"bridge",text:`Maybe in a hundred years they'll read what I have left behind\nMaybe in another galaxy they'll know this human mind\nThat loved so hard it burned — that grieved so deep it shone\nThat rose up when the world was gone and chose to carry on\nRise — rise — one last time with me\nRise — rise — rise`},
     {label:"FINAL CHORUS",type:"final-chorus",text:`Last sunrise, I am golden\nIn this grief I find I'm whole\nI will carry every face I love into the stars\nLast sunrise — you made me\nEvery scar you left has saved me\nI am everything you are — I am everything you are`},
   ]},
-  { title:"Forge the Ark", image:"Album 1/04__Forge_the_Ark.png", note:"In the shipyards of Earth, ninety thousand workers in rotating shifts have been welding the Aether together for eleven years. The ship is the largest object humanity has ever constructed — and it is almost ready. At the foot of the ship, the last boarding gates are being sealed.", sections:[
+  { title:"Forge the Ark", image:"Album 1/04__Forge_the_Ark.png", youtube:"Y24lNWvHRak", note:"In the shipyards of Earth, ninety thousand workers in rotating shifts have been welding the Aether together for eleven years. The ship is the largest object humanity has ever constructed — and it is almost ready. At the foot of the ship, the last boarding gates are being sealed.", sections:[
     {label:"VERSE_01",type:"verse",text:`Ninety thousand workers in the orbital ring\nWelding light to titanium, forging everything\nNo sleep, no shift end, just the hiss of the torch\nEvery rivet a heartbeat — every beam a new hope born`},
     {label:"PRE-CHORUS",type:"pre",text:`Steel and fire and human will\nMountains moved by the force of our need\nThis is the last great thing we'll build`},
     {label:"CHORUS",type:"chorus",text:`Forge the Ark — hammer it holy\nWeld the hull — let the seams hold slowly\nEvery scar on our hands is a prayer\nForge the Ark — build it or die trying\nWe are the fire — we are the iron\nWe will carry humanity through the air — forge the Ark`},
@@ -1504,6 +1716,9 @@ const typeToClass = {
 };
 
 // ── ALBUM METADATA ──
+// Film-frame-with-play icon for rows that have a music video
+const VIDEO_ICON_SVG = '<svg viewBox="0 0 15 12" aria-hidden="true"><rect x="0.75" y="0.75" width="13.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.6 0.9v10.2M12.4 0.9v10.2" stroke="currentColor" stroke-width="0.8" stroke-dasharray="1.1 1.1" opacity="0.7"/><path d="M6 3.6v4.8L9.6 6z" fill="currentColor"/></svg>';
+
 const ALBUMS = {
   1: {
     roman: 'I', title: 'Ignition', cover: 'Album 1/Cover_Album1.png',
@@ -1802,7 +2017,9 @@ function initPulseCanvas() {
     pulseT += 0.03;
     pulseAnim = requestAnimationFrame(draw);
   }
-  resize(); window.addEventListener('resize', resize); draw();
+  resize(); window.addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(canvas);
+  draw();
 }
 
 // ── RENDER: ALBUM TABS ──
@@ -1863,9 +2080,15 @@ function renderTrackNav() {
       <button class="row-play-btn" title="Play ${t.title}"><span class="icon icon-tri-right"></span></button>
       <span class="t-num">${String(i+1).padStart(2,'0')}</span>
       <span class="t-title">${displayTitle}</span>
+      ${t.youtube ? `<button type="button" class="row-video-btn" title="Watch ${t.title} video" aria-label="Watch ${t.title} video">${VIDEO_ICON_SVG}</button>` : ''}
       ${t.instrumental ? '<span class="t-inst">INST</span>' : ''}
     `;
     row.addEventListener('click', () => selectTrack(i));
+    const vBtn = row.querySelector('.row-video-btn');
+    if (vBtn) vBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openVideoModal(t.youtube, t.title, vBtn);
+    });
     row.querySelector('.row-play-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleOrPlay(state.album, i);
@@ -1910,6 +2133,7 @@ function renderCover() {
 
   const img = document.getElementById('coverImg');
   const fallback = document.getElementById('coverFallback');
+  const backdrop = document.getElementById('coverBackdrop');
   // On the dedicated cover view, always show the true album cover file.
   // On a track view, prefer that track's own illustration, falling back to the album cover.
   const srcToUse = track ? (track.image || meta.cover) : meta.cover;
@@ -1920,10 +2144,15 @@ function renderCover() {
   fallback.style.display = 'flex';
   img.style.display = 'none';
   img.classList.add('swap');
+  if (backdrop) backdrop.classList.add('swap');
 
   const tmp = new Image();
   tmp.onload = () => {
     img.src = srcToUse;
+    if (backdrop) {
+      backdrop.style.backgroundImage = 'url("' + encodeURI(srcToUse) + '")';
+      requestAnimationFrame(() => backdrop.classList.remove('swap'));
+    }
     img.style.display = 'block';
     fallback.style.display = 'none';
     requestAnimationFrame(() => img.classList.remove('swap'));
@@ -2378,25 +2607,140 @@ coverClipBtn.addEventListener('click', () => {
 
 clipVideo.addEventListener('ended', stopCoverClip);
 
-// ── LYRICS PANEL TOGGLE (desktop) ──
+// ── PANEL EDGE RAILS (desktop): artwork + lyrics collapse ──
+// State lives on .app-main as data-cover-collapsed / data-lyrics-collapsed; CSS animates
+// grid-template-columns so the hidden panel's column folds to 0 and the others grow.
+// The rails sit in their own grid columns, so the re-open handle never disappears.
 const textPaneInner = document.getElementById('textPaneInner');
 const textPaneToggle = document.getElementById('textPaneToggle');
-textPaneToggle.addEventListener('click', () => {
-  const collapsed = textPaneInner.classList.toggle('collapsed');
-  textPaneToggle.textContent = collapsed ? '»' : '«';
-  textPaneToggle.title = collapsed ? 'Show lyrics panel' : 'Hide lyrics panel';
-});
-
-// ── ARTWORK PANEL TOGGLE (desktop) ──
 const coverPaneInner = document.getElementById('coverPaneInner');
 const coverPaneToggle = document.getElementById('coverPaneToggle');
 const coverPane = document.querySelector('.cover-pane');
-coverPaneToggle.addEventListener('click', () => {
-  const collapsed = coverPaneInner.classList.toggle('collapsed');
-  coverPane.classList.toggle('panel-collapsed', collapsed);
-  coverPaneToggle.textContent = collapsed ? '»' : '«';
-  coverPaneToggle.title = collapsed ? 'Show artwork panel' : 'Hide artwork panel';
+const appMain = document.querySelector('.app-main');
+const PANEL_STORE_KEY = 'aether.panels';
+
+const panelDefs = {
+  cover:  { inner: coverPaneInner, btn: coverPaneToggle, attr: 'data-cover-collapsed',  name: 'artwork' },
+  lyrics: { inner: textPaneInner,  btn: textPaneToggle,  attr: 'data-lyrics-collapsed', name: 'lyrics'  },
+};
+
+// Layout context excluding the panel itself: viewport width + the OTHER panel's state.
+function layoutKey(key) {
+  const other = key === 'cover' ? 'data-lyrics-collapsed' : 'data-cover-collapsed';
+  return window.innerWidth + ':' + appMain.hasAttribute(other);
+}
+
+function setPanelCollapsed(key, collapsed, opts = {}) {
+  const d = panelDefs[key];
+  const isDesktop = window.innerWidth > 980;
+  if (collapsed) {
+    // Freeze inner width so content doesn't reflow while its column folds away.
+    if (isDesktop && !opts.instant) {
+      d.inner.style.setProperty('--lock-w', d.inner.getBoundingClientRect().width + 'px');
+      d.inner.classList.add('width-locked');
+      d.lockCtx = layoutKey(key);
+    }
+    appMain.setAttribute(d.attr, '');
+  } else {
+    // If the rest of the layout changed while hidden, the frozen width is stale: release it.
+    if (d.lockCtx !== layoutKey(key)) d.inner.classList.remove('width-locked');
+    appMain.removeAttribute(d.attr);
+  }
+  d.inner.classList.toggle('collapsed', collapsed);
+  if ('inert' in d.inner) d.inner.inert = collapsed && isDesktop;
+  if (key === 'cover') coverPane.classList.toggle('panel-collapsed', collapsed);
+  d.btn.setAttribute('aria-expanded', String(!collapsed));
+  const label = (collapsed ? 'Show ' : 'Hide ') + d.name + ' panel';
+  d.btn.title = label;
+  d.btn.setAttribute('aria-label', label);
+  if (!opts.skipSave) {
+    try {
+      localStorage.setItem(PANEL_STORE_KEY, JSON.stringify({
+        cover: appMain.hasAttribute(panelDefs.cover.attr),
+        lyrics: appMain.hasAttribute(panelDefs.lyrics.attr),
+      }));
+    } catch (e) {}
+  }
+}
+
+// After the grid finishes animating, release width locks on open panels.
+appMain.addEventListener('transitionend', (e) => {
+  if (e.target !== appMain || e.propertyName !== 'grid-template-columns') return;
+  Object.values(panelDefs).forEach(d => {
+    if (!d.inner.classList.contains('collapsed')) d.inner.classList.remove('width-locked');
+  });
 });
+
+// Each rail toggles its own panel independently (both may be hidden at once).
+function togglePanel(key) {
+  setPanelCollapsed(key, !appMain.hasAttribute(panelDefs[key].attr));
+}
+coverPaneToggle.addEventListener('click', () => togglePanel('cover'));
+textPaneToggle.addEventListener('click', () => togglePanel('lyrics'));
+
+// Restore last desktop layout (no animation on load).
+(function restorePanels() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(PANEL_STORE_KEY) || 'null'); } catch (e) {}
+  if (!saved || (!saved.cover && !saved.lyrics)) return;
+  appMain.style.transition = 'none';
+  if (saved.cover) setPanelCollapsed('cover', true, { instant: true, skipSave: true });
+  if (saved.lyrics) setPanelCollapsed('lyrics', true, { instant: true, skipSave: true });
+  void appMain.offsetWidth;
+  requestAnimationFrame(() => { appMain.style.transition = ''; });
+})();
+
+// Mobile uses tabs, not rails: keep collapsed content interactive there.
+window.addEventListener('resize', () => {
+  const isDesktop = window.innerWidth > 980;
+  Object.values(panelDefs).forEach(d => {
+    if ('inert' in d.inner) d.inner.inert = isDesktop && d.inner.classList.contains('collapsed');
+    if (!d.inner.classList.contains('collapsed')) d.inner.classList.remove('width-locked');
+  });
+});
+
+// ── TRACK VIDEO OVERLAY (YouTube embed) ──
+const videoModal = document.getElementById('videoModal');
+const videoModalPlayer = document.getElementById('videoModalPlayer');
+const videoModalTitle = document.getElementById('videoModalTitle');
+const videoModalClose = document.getElementById('videoModalClose');
+let videoModalReturnFocus = null;
+
+function openVideoModal(youtubeId, title, triggerEl) {
+  if (!youtubeId) return;
+  if (!audioPlayer.paused) audioPlayer.pause();           // don't play two soundtracks at once
+  if (typeof stopCoverClip === 'function' && clipVideo.classList.contains('active')) stopCoverClip();
+  videoModalReturnFocus = triggerEl || document.activeElement;
+  videoModalTitle.textContent = title || '';
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeId) + '?autoplay=1&rel=0&playsinline=1';
+  iframe.title = (title ? title + ' — ' : '') + 'video';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  videoModalPlayer.replaceChildren(iframe);
+  videoModal.classList.add('open');
+  videoModal.setAttribute('aria-hidden', 'false');
+  videoModalClose.focus();
+}
+
+function closeVideoModal() {
+  if (!videoModal.classList.contains('open')) return;
+  videoModal.classList.remove('open');
+  videoModal.setAttribute('aria-hidden', 'true');
+  videoModalPlayer.replaceChildren();                      // destroy iframe → playback stops
+  if (videoModalReturnFocus && videoModalReturnFocus.isConnected) videoModalReturnFocus.focus();
+  videoModalReturnFocus = null;
+}
+
+videoModalClose.addEventListener('click', closeVideoModal);
+videoModal.querySelector('[data-close-video]').addEventListener('click', closeVideoModal);
+// Capture phase so Esc closes the overlay and arrow keys don't skip tracks behind it.
+window.addEventListener('keydown', (e) => {
+  if (!videoModal.classList.contains('open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeVideoModal(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopPropagation();
+}, true);
 
 // ── FULLSCREEN TOGGLE ──
 const fsBtn = document.getElementById('fullscreenBtn');
