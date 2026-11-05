@@ -426,14 +426,6 @@
   }
   .cover-pane.panel-collapsed { border-right-color: transparent; }
   .cover-img-wrap { position: absolute; inset: 0; }
-  .cover-glow {
-    position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(circle at 50% 60%, var(--accent) 0%, transparent 65%);
-    opacity: 0.18;
-    transition: background 0.6s ease;
-  }
-  .cover-glow.pulsing { animation: coverGlowPulse 2.2s ease-in-out infinite; }
-  @keyframes coverGlowPulse { 0%, 100% { opacity: 0.14; } 50% { opacity: 0.42; } }
   .cover-img {
     width: 100%; height: 100%; object-fit: cover;
     opacity: 0.92; transition: opacity 0.4s ease;
@@ -475,7 +467,7 @@
   .cover-meta { display:flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.1rem; font-size: 0.58rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
   .cover-song-note { display: none; font-size: 0.85rem; font-style: italic; color: rgba(255,255,255,0.78); line-height: 1.75; max-width: 560px; margin-top: 0.6rem; }
   .cover-meta span { color: var(--accent); transition: color 0.5s ease; }
-  .cover-pulse { width: 100%; height: 34px; margin-top: 0.9rem; display:block; }
+  .cover-pulse { width: 100%; height: 52px; margin-top: 0.8rem; display:block; }
 
   /* ── COVER ANIMATION CLIP (plays inline inside the artwork frame) ── */
   .cover-clip-btn {
@@ -514,7 +506,7 @@
       opacity: 1; transition: opacity 0.4s ease;
     }
     .cover-backdrop.swap { opacity: 0; }
-    .cover-img, .cover-fallback, .cover-glow { z-index: 1; }
+    .cover-img, .cover-fallback { z-index: 1; }
     .cover-img { position: relative; object-fit: contain; object-position: 50% 0%; }
     .clip-video { object-fit: contain; object-position: 50% 0%; background: transparent; }
     .clip-video.active { z-index: 3; }
@@ -826,7 +818,7 @@
     .cover-pane.track-selected .cover-song-note { display: block; }
     .cover-pulse {
       position: static;
-      width: 100%; height: 34px; margin: 0;
+      width: 100%; height: 44px; margin: 0;
       display: block;
     }
 
@@ -1093,15 +1085,6 @@
         linear-gradient(var(--c), var(--c)) bottom right / 1px var(--l) no-repeat;
       opacity: 0.6; filter: drop-shadow(0 0 4px var(--accent));
     }
-    /* hologram sweep across the artwork */
-    .cover-pane-inner::before {
-      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 35%; z-index: 4; pointer-events: none;
-      background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 9%, transparent) 85%, color-mix(in srgb, var(--accent-pale) 18%, transparent) 99%, transparent);
-      mix-blend-mode: screen; transform: translateY(-110%);
-      animation: fxHoloSweep 8s cubic-bezier(.45,0,.55,1) infinite; will-change: transform;
-    }
-    @keyframes fxHoloSweep { 0% { transform: translateY(-110%); } 45%, 100% { transform: translateY(300%); } }
-    .cover-pane-inner:has(.clip-video.active)::before { display: none; }
   }
 
   /* ── HUD keyboard focus rings ── */
@@ -1136,14 +1119,51 @@
   .loading-screen { transition: opacity 0.6s ease, transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.6s ease; }
   .loading-screen.hidden { transform: scale(1.06); filter: blur(6px); }
 
+  /* ── ALIVE COVER: "living depth" ──
+     The artwork floats on its blurred backdrop like a hologram plate:
+       • a very slow breath (scale 1.02 ↔ 1.035 over 18s) + a lazy idle drift (27s)
+       • desktop: the plate follows the cursor a few px and the backdrop slides the other way (parallax depth)
+       • while music plays the plate leans in up to ~0.8% on the bass
+     Motion lives on the image + backdrop only (the wrapper is never transformed, so the clip button and
+     text layers keep their stacking). Breath/drift animate registered custom properties so they compose
+     with the cursor offset, the bass lean and the swap transition. No overlay, no colour flash, no sweep. */
+  @property --breath { syntax: '<number>'; inherits: false; initial-value: 1.025; }
+  @property --dx { syntax: '<length>'; inherits: false; initial-value: 0px; }
+  @property --dy { syntax: '<length>'; inherits: false; initial-value: 0px; }
+  .cover-img-wrap { --par-x: 0px; --par-y: 0px; --beat: 0; }
+  .cover-img {
+    scale: calc(var(--breath) + var(--beat) * 0.008);
+    translate: calc(var(--par-x) + var(--dx)) calc(var(--par-y) + var(--dy));
+    animation: fxCoverBreath 18s ease-in-out infinite, fxCoverDrift 27s ease-in-out infinite;
+  }
+  @keyframes fxCoverBreath { 0%, 100% { --breath: 1.02; } 50% { --breath: 1.035; } }
+  @keyframes fxCoverDrift {
+    0%, 100% { --dx: 0px; --dy: 0px; }
+    25% { --dx: -3px; --dy: 2px; }
+    50% { --dx: 2px; --dy: 3px; }
+    75% { --dx: 3px; --dy: -2px; }
+  }
+  @media (min-width: 981px) {
+    .cover-backdrop { translate: calc(var(--par-x) * -1.2) calc(var(--par-y) * -1.2); }
+  }
+  /* the clip has its own framing: hide the breathing still underneath so no edge peeks out around it */
+  .cover-img-wrap:has(.clip-video.active) .cover-img { visibility: hidden; }
+  @media (max-width: 980px) {
+    .cover-img-wrap { overflow: hidden; }   /* keep the breathing art inside its frame on the mobile Cover tab */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cover-img { animation: none !important; scale: none !important; translate: none !important; }
+    .cover-backdrop { translate: none !important; }
+  }
+
   /* ── Reduced motion: keep the look, drop the movement ── */
   @media (prefers-reduced-motion: reduce) {
     body { transition: none; }
     body::before, body::after, .ambient-glow, .ambient-aurora::before, .ambient-aurora::after,
     .topbar-stamp, .track-row.playing, .ao-track-item.playing, .track-row.playing::after, .ao-track-item.playing::after,
-    .mini-player::after, body.fx-playing .mp-play, .cover-title, .cover-pane-inner::before,
+    .mini-player::after, body.fx-playing .mp-play, .cover-title,
     .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom { animation: none !important; }
-    body::after, .mini-player::after, .cover-pane-inner::before, .fx-flash, .fx-spot { display: none !important; }
+    body::after, .mini-player::after, .fx-flash, .fx-spot { display: none !important; }
     .loading-log div { opacity: 1; clip-path: none; }
     .cover-img, .track-row::before, .track-row .t-title, .album-tab, .loading-screen, .mp-progress, .mp-vol-slider { transition: none !important; }
     .cover-img.swap { transform: none; filter: none; }
@@ -1208,7 +1228,6 @@
           <div class="cover-backdrop" id="coverBackdrop" aria-hidden="true"></div>
           <img class="cover-img" id="coverImg" src="" alt="">
           <div class="cover-fallback" id="coverFallback" style="display:none;"></div>
-          <div class="cover-glow" id="coverGlow"></div>
           <video id="clipVideo" class="clip-video" muted playsinline webkit-playsinline></video>
           <button class="cover-clip-btn" id="coverClipBtn" title="Play cover animation">🎥</button>
         </div>
@@ -2258,68 +2277,218 @@ const MAX_ALBUM = Math.max(...ALBUM_NUMS);
 
 let state = { album: MIN_ALBUM, track: -1 };
 
-// ── PULSE CANVAS ──
+// ── SIGNAL RIBBON VISUALIZER ──
+// One concept, polished: the track's spectrum as a mirrored neon "signal ribbon" on a HUD baseline.
+//  • bass sits in the centre and the spectrum fans outward (log-spaced bins, smoothed attack/decay)
+//  • glowing upper crest + dimmer reflected lower crest, edge-faded accent fill
+//  • falling peak-hold "star" dots ride above the crest
+//  • the live waveform threads through as a thin oscilloscope trace
+//  • HUD ticks, a playhead tracking song progress, SIG / level readouts
+// Driven by the existing AnalyserNode. ~30fps while playing, settles to a still idle "carrier" frame and
+// stops when paused or the tab is hidden; reduced-motion users get the still frame only.
 let pulseCtx = null, pulseT = 0, pulseAnim = null;
 function initPulseCanvas() {
   const canvas = document.getElementById('coverPulse');
   if (!canvas) return;
   pulseCtx = canvas.getContext('2d');
+  const ctx = pulseCtx;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const POINTS = 48;                      // per side
+  const level = new Float32Array(POINTS); // smoothed spectrum
+  const peak = new Float32Array(POINTS);  // peak-hold
+  let colors = null, colorsAt = 0, lastFrame = 0, settleUntil = 0, W = 0, H = 0, dpr = 1;
+
   function resize() {
-    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-    pulseCtx.setTransform(1,0,0,1,0,0);
-    pulseCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.offsetWidth; H = canvas.offsetHeight;
+    canvas.width = Math.max(1, Math.round(W * dpr));
+    canvas.height = Math.max(1, Math.round(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    kick(300);
   }
-  function draw() {
-    const meta = ALBUMS[state.album];
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
-    pulseCtx.clearRect(0,0,W,H);
+  function readColors(now) {
+    // follow the album colour morph (CSS vars) without hitting getComputedStyle every frame
+    if (colors && now - colorsAt < 250) return colors;
+    const cs = getComputedStyle(document.body);
+    colors = {
+      accent: cs.getPropertyValue('--accent').trim() || '#4db8ff',
+      deep: cs.getPropertyValue('--accent-deep').trim() || '#1a6fc4',
+      pale: cs.getPropertyValue('--accent-pale').trim() || '#a8d8ff',
+    };
+    colorsAt = now;
+    return colors;
+  }
+  const isPlaying = () => !!(analyser && audioCtx && audioCtx.state === 'running' && !audioPlayer.paused);
 
-    // Solid backing panel so the readout always reads clearly against any artwork
-    pulseCtx.fillStyle = 'rgba(4,10,18,0.72)';
-    pulseCtx.fillRect(0, 0, W, H);
-
-    const isPlaying = analyser && audioCtx && audioCtx.state === 'running' && !audioPlayer.paused;
-    if (isPlaying) analyser.getByteFrequencyData(freqData);
-
-    const spikeCount = 110;
-    const spikeWidth = W / spikeCount;
-    const binCount = freqData ? freqData.length : 0;
-
-    pulseCtx.shadowColor = '#eaf6ff';
-    pulseCtx.shadowBlur = isPlaying ? 5 : 2;
-
-    for (let i = 0; i < spikeCount / 2; i++) {
-      let v;
-      if (isPlaying) {
-        const bin = Math.floor((i / (spikeCount / 2)) * binCount);
-        v = freqData[bin] / 255;
-      } else {
-        v = 0.08 + 0.1 * (Math.sin(pulseT * 1.4 + i * 0.5) * 0.5 + 0.5)
-                 + 0.04 * (Math.sin(pulseT * 0.6 + i * 0.2) * 0.5 + 0.5);
+  function sample(playing) {
+    if (playing) {
+      analyser.getByteFrequencyData(freqData);
+      const bins = freqData.length;
+      for (let i = 0; i < POINTS; i++) {
+        // log-spaced bins so bass doesn't hog the ribbon; skip DC bin
+        const a = Math.floor(1 + Math.pow(i / POINTS, 1.6) * (bins * 0.78));
+        const b = Math.max(a + 1, Math.floor(1 + Math.pow((i + 1) / POINTS, 1.6) * (bins * 0.78)));
+        let s = 0; for (let k = a; k < b; k++) s += freqData[k];
+        let v = (s / (b - a)) / 255;
+        v = Math.pow(v, 1.7) * (1 + i / POINTS * 0.7);    // compress loud passages, lift the highs a little
+        v = Math.min(0.92, v);
+        level[i] += (v - level[i]) * (v > level[i] ? 0.6 : 0.18);
+        peak[i] = Math.max(level[i], peak[i] - 0.012);
       }
-      const spikeH = Math.max(1.5, v * (H * 0.46));
-      pulseCtx.fillStyle = i % 3 === 0 ? meta.mid : meta.ice;
-      pulseCtx.globalAlpha = isPlaying ? (0.55 + v * 0.5) : 0.4;
-      pulseCtx.fillRect(W/2 + i * spikeWidth, H/2 - spikeH, Math.max(1, spikeWidth - 1), spikeH * 2);
-      pulseCtx.fillRect(W/2 - (i + 1) * spikeWidth, H/2 - spikeH, Math.max(1, spikeWidth - 1), spikeH * 2);
+    } else {
+      // idle carrier: gentle standing wave, energy decays toward it
+      for (let i = 0; i < POINTS; i++) {
+        const idle = reduce.matches ? 0.06 : 0.05 + 0.04 * (Math.sin(pulseT * 1.2 + i * 0.35) * 0.5 + 0.5);
+        level[i] += (idle - level[i]) * 0.12;
+        peak[i] = Math.max(level[i], peak[i] - 0.02);
+      }
     }
-    pulseCtx.globalAlpha = 1;
-
-    pulseCtx.strokeStyle = meta.mid + '55';
-    pulseCtx.lineWidth = 1;
-    pulseCtx.shadowBlur = 0;
-    pulseCtx.beginPath();
-    pulseCtx.moveTo(0, H/2);
-    pulseCtx.lineTo(W, H/2);
-    pulseCtx.stroke();
-
-    pulseT += 0.03;
-    pulseAnim = requestAnimationFrame(draw);
   }
-  resize(); window.addEventListener('resize', resize);
+
+  function crestPath(cy, amp, dir) {
+    // smooth mirrored curve through the points (centre → edges on both sides)
+    const half = W / 2;
+    const xs = i => half + (i / (POINTS - 1)) * half;
+    ctx.moveTo(0, cy);
+    for (let side = -1; side <= 1; side += 2) {
+      const pts = [];
+      for (let i = 0; i < POINTS; i++) {
+        const x = side === 1 ? xs(i) : W - xs(i);
+        pts.push([x, cy + dir * level[i] * amp]);
+      }
+      if (side === -1) pts.reverse();          // left side runs edge → centre
+      for (let j = 0; j < pts.length - 1; j++) {
+        const [x0, y0] = pts[j], [x1, y1] = pts[j + 1];
+        ctx.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      }
+    }
+    ctx.lineTo(W, cy);
+  }
+
+  function draw(now) {
+    const playing = isPlaying();
+    const c = readColors(now);
+    const cy = Math.round(H * 0.58) + 0.5;
+    const ampUp = H * 0.4, ampDown = H * 0.26;
+    sample(playing);
+
+    ctx.clearRect(0, 0, W, H);
+    // backing plate (keeps it readable over any artwork), edge-faded
+    const plate = ctx.createLinearGradient(0, 0, W, 0);
+    plate.addColorStop(0, 'rgba(3,7,14,0)'); plate.addColorStop(0.12, 'rgba(3,7,14,0.62)');
+    plate.addColorStop(0.88, 'rgba(3,7,14,0.62)'); plate.addColorStop(1, 'rgba(3,7,14,0)');
+    ctx.fillStyle = plate; ctx.fillRect(0, 0, W, H);
+
+    // HUD ticks along the baseline
+    ctx.globalAlpha = 0.35; ctx.fillStyle = c.deep;
+    for (let x = W / 2 % 16; x < W; x += 16) ctx.fillRect(Math.round(x), cy + 3, 1, (Math.round((x - W / 2) / 16) % 4 === 0) ? 4 : 2);
+    ctx.globalAlpha = 1;
+
+    // edge fade for the ribbon
+    const fade = ctx.createLinearGradient(0, 0, W, 0);
+    fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(0.5, '#000'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+
+    // filled ribbon (upper + reflected lower)
+    const fill = ctx.createLinearGradient(0, cy - ampUp, 0, cy + ampDown);
+    fill.addColorStop(0, c.accent); fill.addColorStop(0.55, c.deep); fill.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.globalAlpha = playing ? 0.32 : 0.18;
+    ctx.fillStyle = fill;
+    ctx.beginPath(); crestPath(cy, ampUp, -1); ctx.lineTo(W, cy); crestPath(cy, ampDown, 1); ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // reflected lower crest (dim)
+    ctx.strokeStyle = c.deep; ctx.globalAlpha = 0.55; ctx.lineWidth = 1;
+    ctx.beginPath(); crestPath(cy, ampDown, 1); ctx.stroke();
+    // glowing upper crest
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = c.pale; ctx.lineWidth = 1.4;
+    ctx.shadowColor = c.accent; ctx.shadowBlur = playing && !reduce.matches ? 10 : 4;
+    ctx.beginPath(); crestPath(cy, ampUp, -1); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // peak-hold star dots
+    if (playing) {
+      ctx.fillStyle = c.pale;
+      for (let i = 1; i < POINTS; i += 2) {
+        if (peak[i] - level[i] < 0.03) continue;
+        const y = cy - peak[i] * ampUp - 2;
+        const off = (i / (POINTS - 1)) * (W / 2);
+        ctx.globalAlpha = Math.min(1, 0.35 + peak[i]);
+        ctx.fillRect(W / 2 + off - 1, y - 1, 2, 2);
+        ctx.fillRect(W / 2 - off - 1, y - 1, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // oscilloscope trace (live waveform) threading through the ribbon
+    if (playing && waveData) {
+      analyser.getByteTimeDomainData(waveData);
+      ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.4; ctx.lineWidth = 1;
+      ctx.beginPath();
+      const n = waveData.length;
+      for (let k = 0; k < n; k += 2) {
+        const x = (k / (n - 1)) * W;
+        const y = cy - ((waveData[k] - 128) / 128) * H * 0.22;
+        k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    }
+
+    // baseline
+    ctx.globalCompositeOperation = 'destination-in';   // edge-fade everything drawn so far…
+    ctx.fillStyle = fade; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 0.5; ctx.fillStyle = c.accent; ctx.fillRect(W * 0.08, cy, W * 0.84, 1); ctx.globalAlpha = 1;
+
+    // playhead along the baseline (song progress)
+    const d = audioPlayer.duration;
+    if (d && isFinite(d) && audioPlayer.src) {
+      const px = Math.round(W * 0.08 + (audioPlayer.currentTime / d) * W * 0.84);
+      ctx.fillStyle = c.pale; ctx.shadowColor = c.accent; ctx.shadowBlur = 6;
+      ctx.fillRect(px, cy - 4, 1, 9);
+      ctx.beginPath(); ctx.moveTo(px - 3, cy + 7); ctx.lineTo(px + 0.5, cy + 4); ctx.lineTo(px + 4, cy + 7); ctx.closePath(); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // tiny readouts
+    if (H >= 40) {
+      ctx.font = '8px "Share Tech Mono", monospace'; ctx.textBaseline = 'top';
+      ctx.fillStyle = c.accent; ctx.globalAlpha = 0.75;
+      ctx.textAlign = 'left'; ctx.fillText(playing ? '◆ SIGNAL LOCK' : '◇ CARRIER', W * 0.08, 2);
+      let e = 0; for (let i = 0; i < POINTS; i++) e += level[i];
+      ctx.textAlign = 'right'; ctx.fillText((playing ? (e / POINTS * 100).toFixed(0).padStart(2, '0') : '--') + ' %SIG', W * 0.92, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function loop(now) {
+    pulseAnim = null;
+    if (document.hidden) return;
+    const playing = isPlaying();
+    const animate = !reduce.matches && (playing || now < settleUntil);
+    if (now - lastFrame >= 33 || !animate) {     // ~30fps cap
+      lastFrame = now;
+      pulseT += 0.06;
+      draw(now);
+    }
+    if (animate) pulseAnim = requestAnimationFrame(loop);
+  }
+  // run for a little while (settle/fade/colour morph), or keep running while playing
+  function kick(ms) {
+    settleUntil = Math.max(settleUntil, performance.now() + (ms || 0));
+    if (!pulseAnim) pulseAnim = requestAnimationFrame(loop);
+  }
+
+  ['play', 'playing', 'pause', 'ended', 'seeked', 'emptied'].forEach(ev => audioPlayer.addEventListener(ev, () => kick(1200)));
+  audioPlayer.addEventListener('timeupdate', () => { if (reduce.matches) kick(0); });   // keep playhead current
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(600); });
+  new MutationObserver(() => kick(900)).observe(document.body, { attributes: true, attributeFilter: ['data-album'] });
+  if (reduce.addEventListener) reduce.addEventListener('change', () => kick(300));
+  window.addEventListener('resize', resize);
   if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(canvas);
-  draw();
+  resize();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => kick(0));
 }
 
 // ── RENDER: ALBUM TABS ──
@@ -2746,8 +2915,6 @@ function refreshPlayingIndicators() {
   }
   const mpBtn = document.getElementById('mpPlayPause');
   if (mpBtn) mpBtn.innerHTML = `<span class="icon ${audioPlayer.paused ? 'icon-tri-right' : 'icon-pause'}"></span>`;
-  const glow = document.getElementById('coverGlow');
-  if (glow) glow.classList.toggle('pulsing', !audioPlayer.paused);
 }
 
 function formatTime(s) {
@@ -3647,6 +3814,7 @@ initPulseCanvas();
   // Playing state → play-button ring + audio-reactive glow loop
   const aurora = document.getElementById('ambientAurora');
   const mini = document.getElementById('miniPlayer');
+  const coverWrapFx = document.querySelector('.cover-img-wrap');
   let beatBuf = null, beat = 0, fxRaf = 0, lastT = 0;
   function fxLoop(t) {
     fxRaf = requestAnimationFrame(fxLoop);
@@ -3664,6 +3832,7 @@ initPulseCanvas();
     const v = beat.toFixed(3);
     aurora.style.setProperty('--beat', v);
     mini.style.setProperty('--beat', v);
+    if (coverWrapFx) coverWrapFx.style.setProperty('--beat', v);
   }
   function startFx() { if (!fxRaf && !FX_REDUCE.matches && !document.hidden) { lastT = 0; fxRaf = requestAnimationFrame(fxLoop); } }
   function stopFx() {
@@ -3671,6 +3840,7 @@ initPulseCanvas();
     fxRaf = 0; beat = 0;
     aurora.style.setProperty('--beat', '0');
     mini.style.setProperty('--beat', '0');
+    if (coverWrapFx) coverWrapFx.style.setProperty('--beat', '0');
   }
   function syncPlaying() {
     const playing = !audioPlayer.paused;
@@ -3728,6 +3898,38 @@ initPulseCanvas();
   });
   // Reduced motion: canvases were cleared by the resize handler, so redraw the static frame
   window.addEventListener('resize', () => { if (FX_REDUCE.matches && ambientActive) ambientLoop(); });
+})();
+
+// ── ALIVE COVER: cursor parallax (desktop, fine pointer) ──
+(function aliveCover() {
+  const pane = document.querySelector('.cover-pane');
+  const wrap = document.querySelector('.cover-img-wrap');
+  if (!pane || !wrap) return;
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const MAX_X = 8, MAX_Y = 6;           // px — stays inside the breath overscan, never shows an edge
+  let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+  const enabled = () => fine.matches && !FX_REDUCE.matches && window.innerWidth > 980;
+  function step() {
+    raf = 0;
+    cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;      // soft, slightly lagging follow
+    if (Math.abs(tx - cx) < 0.02 && Math.abs(ty - cy) < 0.02) { cx = tx; cy = ty; }
+    wrap.style.setProperty('--par-x', cx.toFixed(2) + 'px');
+    wrap.style.setProperty('--par-y', cy.toFixed(2) + 'px');
+    if ((cx !== tx || cy !== ty) && !document.hidden) raf = requestAnimationFrame(step);
+  }
+  const go = () => { if (!raf) raf = requestAnimationFrame(step); };
+  pane.addEventListener('pointermove', (e) => {
+    if (!enabled()) return;
+    const r = pane.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    tx = ((e.clientX - r.left) / r.width - 0.5) * 2 * MAX_X;
+    ty = ((e.clientY - r.top) / r.height - 0.5) * 2 * MAX_Y;
+    go();
+  }, { passive: true });
+  pane.addEventListener('pointerleave', () => { tx = 0; ty = 0; go(); });
+  const reset = () => { if (!enabled()) { tx = ty = cx = cy = 0; wrap.style.setProperty('--par-x', '0px'); wrap.style.setProperty('--par-y', '0px'); } };
+  window.addEventListener('resize', reset);
+  if (FX_REDUCE.addEventListener) FX_REDUCE.addEventListener('change', reset);
 })();
 </script>
 </body>
