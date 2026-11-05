@@ -115,6 +115,14 @@
     transition: opacity 0.6s ease;
   }
   .loading-screen.hidden { opacity: 0; pointer-events: none; }
+  .loading-skip {
+    margin-top: 0.4rem; padding: 0.35rem 0.9rem; cursor: pointer;
+    font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: #4db8ff; background: transparent; border: 1px solid rgba(77,184,255,0.45); border-radius: 2px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .loading-skip[hidden] { display: none; }
+  .loading-skip:hover, .loading-skip:focus-visible { border-color: #4db8ff; box-shadow: 0 0 12px rgba(77,184,255,0.5); outline: none; }
   .loading-mark {
     font-size: 2.2rem; color: #4db8ff;
     animation: loadingSpin 2.4s linear infinite;
@@ -860,15 +868,303 @@
     .text-head .th-badge { display: none !important; }
     .text-body { padding: 1rem 1.1rem 1.6rem; }
   }
+
+  /* ═══════════════════════════════════════════════════════════════
+     FX PACK — ambient motion, snappier transitions, HUD chrome.
+     Everything is driven by the album accent vars and is switched
+     off under prefers-reduced-motion (see the block at the end).
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Smooth album theme morph: registered colour vars interpolate on body */
+  @property --accent      { syntax: '<color>'; inherits: true; initial-value: #4db8ff; }
+  @property --accent-deep { syntax: '<color>'; inherits: true; initial-value: #1a6fc4; }
+  @property --accent-pale { syntax: '<color>'; inherits: true; initial-value: #a8d8ff; }
+  @property --bg          { syntax: '<color>'; inherits: true; initial-value: #03060f; }
+  @property --bg-panel    { syntax: '<color>'; inherits: true; initial-value: #070d1a; }
+  @property --bg-raise    { syntax: '<color>'; inherits: true; initial-value: #0a1220; }
+  @property --border      { syntax: '<color>'; inherits: true; initial-value: #2a4a6a; }
+  @property --border-dim  { syntax: '<color>'; inherits: true; initial-value: #0d3b6e; }
+  @property --text-dim    { syntax: '<color>'; inherits: true; initial-value: #5a7fa8; }
+  body {
+    transition: background 0.5s ease,
+      --accent 0.7s ease, --accent-deep 0.7s ease, --accent-pale 0.7s ease,
+      --bg 0.7s ease, --bg-panel 0.7s ease, --bg-raise 0.7s ease,
+      --border 0.7s ease, --border-dim 0.7s ease, --text-dim 0.7s ease;
+  }
+
+  /* ── Ambient: accent aurora wash (gradients only, transform-animated) ── */
+  .ambient-aurora {
+    position: absolute; inset: -20%; pointer-events: none; mix-blend-mode: screen;
+    --beat: 0;
+    opacity: calc(0.2 + var(--beat) * 0.3);
+  }
+  .ambient-aurora::before, .ambient-aurora::after {
+    content: ''; position: absolute; width: 70%; height: 70%; border-radius: 50%;
+    will-change: transform;
+  }
+  .ambient-aurora::before {
+    left: 0; top: 5%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 55%, transparent), transparent 72%);
+    animation: fxAuroraA 26s ease-in-out infinite alternate;
+  }
+  .ambient-aurora::after {
+    right: 0; bottom: 0;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-deep) 65%, transparent), transparent 72%);
+    animation: fxAuroraB 34s ease-in-out infinite alternate;
+  }
+  @keyframes fxAuroraA { from { transform: translate(-6%, -4%) scale(1) rotate(0deg); } to { transform: translate(22%, 12%) scale(1.3) rotate(25deg); } }
+  @keyframes fxAuroraB { from { transform: translate(8%, 6%) scale(1.15); } to { transform: translate(-20%, -10%) scale(0.9); } }
+
+  /* ── Ambient: scanline breathing + slow scan sweep ── */
+  body::before { animation: fxScanBreath 6s ease-in-out infinite; }
+  @keyframes fxScanBreath { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+  body::after {
+    content: ''; position: fixed; left: 0; right: 0; top: 0; height: 22vh;
+    pointer-events: none; z-index: 9001; mix-blend-mode: screen;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--accent) 4%, transparent) 70%, color-mix(in srgb, var(--accent) 10%, transparent) 98%, transparent 100%);
+    transform: translateY(-25vh);
+    animation: fxScanSweep 11s linear infinite;
+    will-change: transform;
+  }
+  @keyframes fxScanSweep { 0% { transform: translateY(-25vh); } 55%, 100% { transform: translateY(110vh); } }
+
+  /* ── Album switch: warp flash ── */
+  .fx-flash {
+    position: fixed; inset: 0; pointer-events: none; z-index: 8999; opacity: 0;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 45%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+      linear-gradient(180deg, transparent 49.6%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 50.4%);
+  }
+  .fx-flash.go { animation: fxFlash 0.75s cubic-bezier(.22,1,.36,1); }
+  @keyframes fxFlash {
+    0% { opacity: 0; transform: scaleY(0.2); }
+    18% { opacity: 1; transform: scaleY(1); }
+    100% { opacity: 0; transform: scaleY(1.4); }
+  }
+
+  /* ── Cursor spotlight over the main panes (desktop, fine pointer) ── */
+  .fx-spot {
+    position: fixed; left: 0; top: 0; width: 560px; height: 560px; margin: -280px 0 0 -280px;
+    border-radius: 50%; pointer-events: none; z-index: 2; mix-blend-mode: screen;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 11%, transparent), transparent);
+    opacity: 0; transition: opacity 0.4s ease; will-change: transform;
+  }
+  body.fx-spot-on .fx-spot { opacity: 1; }
+  @media (max-width: 980px), (hover: none) { .fx-spot { display: none; } }
+
+  /* ── Topbar: neon seam + stamp flicker ── */
+  .topbar::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+    opacity: 0.55;
+  }
+  .topbar-stamp {
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+    animation: fxStampFlicker 8s steps(1, end) infinite;
+  }
+  @keyframes fxStampFlicker {
+    0%, 90%, 92.5%, 95%, 100% { opacity: 1; }
+    91% { opacity: 0.3; } 93.5% { opacity: 0.75; } 94.2% { opacity: 0.15; }
+  }
+
+  /* ── Album tabs: lift + accent glow ── */
+  .album-tab { transition: transform 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.2s ease, color 0.2s ease; }
+  .album-tab:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 12px color-mix(in srgb, currentColor 30%, transparent); }
+  .album-tab[class*="active-"] { box-shadow: 0 0 14px color-mix(in srgb, currentColor 35%, transparent), inset 0 0 14px color-mix(in srgb, currentColor 18%, transparent); }
+
+  /* ── Track list: glow rail on hover, neon active, playing pulse + EQ ── */
+  .track-row { position: relative; overflow: hidden; }
+  .track-row::before {
+    content: ''; position: absolute; left: 0; top: 18%; bottom: 18%; width: 2px; border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent), 0 0 18px var(--accent);
+    transform: scaleY(0); transition: transform 0.28s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+  }
+  .track-row:not(.active):hover::before { transform: scaleY(1); }
+  .track-row:hover {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 80%), var(--bg-raise);
+  }
+  .track-row .t-title { transition: transform 0.25s cubic-bezier(.22,1,.36,1), color 0.2s ease; }
+  .track-row:hover .t-title { transform: translateX(3px); color: #dde; }
+  .track-row.active {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 85%), var(--bg-raise);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .track-row.active .t-title { text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .track-row.playing, .ao-track-item.playing { animation: fxRowPulse 2.4s ease-in-out infinite; }
+  @keyframes fxRowPulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent), inset 0 0 10px color-mix(in srgb, var(--accent) 6%, transparent); }
+    50%      { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 0 22px color-mix(in srgb, var(--accent) 16%, transparent); }
+  }
+  .track-row.playing::after, .ao-track-item.playing::after {
+    content: ''; flex-shrink: 0; width: 12px; height: 11px;
+    background:
+      linear-gradient(var(--accent), var(--accent)) 0 100% / 3px 30% no-repeat,
+      linear-gradient(var(--accent), var(--accent)) 4.5px 100% / 3px 70% no-repeat,
+      linear-gradient(var(--accent), var(--accent)) 9px 100% / 3px 45% no-repeat;
+    filter: drop-shadow(0 0 3px var(--accent));
+    animation: fxEq 0.9s ease-in-out infinite;
+  }
+  @keyframes fxEq {
+    0%, 100% { background-size: 3px 30%, 3px 70%, 3px 45%; }
+    25% { background-size: 3px 90%, 3px 35%, 3px 75%; }
+    50% { background-size: 3px 50%, 3px 100%, 3px 25%; }
+    75% { background-size: 3px 80%, 3px 50%, 3px 95%; }
+  }
+
+  /* ── Buttons: HUD glow on hover ── */
+  .row-play-btn:hover, .mp-btn:hover, .text-nav-btn:hover:not(:disabled), .fullscreen-btn:hover {
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  /* ── Mini player chrome ── */
+  .mini-player {
+    position: relative;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 80%, transparent), var(--bg-panel));
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    --beat: 0;
+  }
+  .mini-player::before {
+    content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent-deep) 20%, var(--accent) 50%, var(--accent-deep) 80%, transparent);
+    opacity: calc(0.55 + var(--beat) * 0.45);
+    box-shadow: 0 0 calc(6px + var(--beat) * 14px) var(--accent);
+  }
+  .mini-player::after {
+    content: ''; position: absolute; left: 0; top: -1px; width: 140px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    opacity: 0.8; animation: fxGlint 6s linear infinite; will-change: transform;
+  }
+  @keyframes fxGlint { 0% { transform: translateX(-160px); } 60%, 100% { transform: translateX(100vw); } }
+  body.fx-playing .mp-play {
+    border-color: var(--accent); color: var(--accent);
+    animation: fxPlayRing 2s ease-out infinite;
+  }
+  @keyframes fxPlayRing {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent); }
+    100% { box-shadow: 0 0 0 10px transparent, 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent); }
+  }
+  .mp-progress, .mp-vol-slider {
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-deep), var(--accent)) 0 0 / var(--fill, 0%) 100% no-repeat, var(--border);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 22%, transparent);
+    transition: background-size 0.3s linear, box-shadow 0.3s ease;
+  }
+  .mp-vol-slider.is-muted { background-size: 0% 100%, auto; }
+  .mp-progress:hover, .mp-vol-slider:hover { box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .mp-progress::-webkit-slider-thumb, .mp-vol-slider::-webkit-slider-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent), 0 0 10px var(--accent); }
+  .mp-progress::-moz-range-thumb, .mp-vol-slider::-moz-range-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent), 0 0 10px var(--accent); }
+
+  /* ── Transitions: cover swap settle, title reveal, staggered lyrics ── */
+  .cover-img { transition: opacity 0.45s ease, transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.6s ease; }
+  .cover-img.swap { transform: scale(1.045); filter: blur(6px) brightness(1.35); }
+  .cover-title { animation: fxTitleReveal 0.75s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes fxTitleReveal {
+    from { clip-path: inset(0 100% 0 0); letter-spacing: 0.3em; filter: drop-shadow(0 0 12px var(--accent)); }
+    to   { clip-path: inset(0 0 0 0);    letter-spacing: 0.08em; filter: none; }
+  }
+  .text-body > *:nth-child(2) { animation-delay: 0.04s; }
+  .text-body > *:nth-child(3) { animation-delay: 0.08s; }
+  .text-body > *:nth-child(4) { animation-delay: 0.12s; }
+  .text-body > *:nth-child(5) { animation-delay: 0.16s; }
+  .text-body > *:nth-child(6) { animation-delay: 0.2s; }
+  .text-body > *:nth-child(n+7) { animation-delay: 0.24s; }
+
+  /* ── Desktop: snappier panel folds + spring on re-open, holo cover frame ── */
+  @media (min-width: 981px) {
+    .app-main { --pane-ease: cubic-bezier(.22,1,.36,1); transition: grid-template-columns 0.42s var(--pane-ease); }
+    .cover-pane-inner:not(.collapsed), .text-pane-inner:not(.collapsed) {
+      transition: transform 0.55s cubic-bezier(.34,1.5,.64,1), opacity 0.35s ease 0.06s, filter 0.4s ease, background 0.5s ease;
+    }
+    .cover-pane-inner { position: relative; }
+    /* HUD corner brackets */
+    .cover-pane-inner::after {
+      content: ''; position: absolute; inset: 12px; pointer-events: none; z-index: 4;
+      --c: var(--accent); --l: 20px;
+      background:
+        linear-gradient(var(--c), var(--c)) top left / var(--l) 1px no-repeat,
+        linear-gradient(var(--c), var(--c)) top left / 1px var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / var(--l) 1px no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / 1px var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / var(--l) 1px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / 1px var(--l) no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / var(--l) 1px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / 1px var(--l) no-repeat;
+      opacity: 0.6; filter: drop-shadow(0 0 4px var(--accent));
+    }
+    /* hologram sweep across the artwork */
+    .cover-pane-inner::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 35%; z-index: 4; pointer-events: none;
+      background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent) 9%, transparent) 85%, color-mix(in srgb, var(--accent-pale) 18%, transparent) 99%, transparent);
+      mix-blend-mode: screen; transform: translateY(-110%);
+      animation: fxHoloSweep 8s cubic-bezier(.45,0,.55,1) infinite; will-change: transform;
+    }
+    @keyframes fxHoloSweep { 0% { transform: translateY(-110%); } 45%, 100% { transform: translateY(300%); } }
+    .cover-pane-inner:has(.clip-video.active)::before { display: none; }
+  }
+
+  /* ── HUD keyboard focus rings ── */
+  :where(button, input[type="range"], a, [tabindex]):focus-visible {
+    outline: 1px solid var(--accent); outline-offset: 2px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  /* ── Boot sequence ── */
+  .loading-core { position: relative; width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; }
+  .loading-core .loading-mark { text-shadow: 0 0 18px #4db8ff; }
+  .loading-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed rgba(77,184,255,0.45); animation: loadingSpin 9s linear infinite; }
+  .loading-ring.r2 { inset: 12px; border-style: solid; border-color: rgba(77,184,255,0.18) rgba(77,184,255,0.7) rgba(77,184,255,0.18) rgba(77,184,255,0.7); animation-duration: 3.2s; animation-direction: reverse; box-shadow: 0 0 16px rgba(77,184,255,0.25); }
+  .loading-log {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; color: #4a6a8a;
+    text-transform: uppercase; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.6rem; min-width: 260px;
+  }
+  .loading-log div { opacity: 0; white-space: nowrap; clip-path: inset(0 100% 0 0); animation: fxBootLine 0.5s steps(24, end) forwards; }
+  .loading-log div:nth-child(1) { animation-delay: 0.15s; }
+  .loading-log div:nth-child(2) { animation-delay: 0.55s; }
+  .loading-log div:nth-child(3) { animation-delay: 0.95s; }
+  .loading-log div:nth-child(4) { animation-delay: 1.35s; color: #4db8ff; }
+  @keyframes fxBootLine { from { opacity: 1; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+  .loading-bar { position: relative; box-shadow: 0 0 10px rgba(77,184,255,0.2); }
+  .loading-bar-fill { box-shadow: 0 0 10px #4db8ff, 0 0 20px rgba(77,184,255,0.6); }
+  .loading-bar::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 60px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+    animation: fxBarShimmer 1.4s linear infinite;
+  }
+  @keyframes fxBarShimmer { from { transform: translateX(-60px); } to { transform: translateX(220px); } }
+  .loading-screen { transition: opacity 0.6s ease, transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.6s ease; }
+  .loading-screen.hidden { transform: scale(1.06); filter: blur(6px); }
+
+  /* ── Reduced motion: keep the look, drop the movement ── */
+  @media (prefers-reduced-motion: reduce) {
+    body { transition: none; }
+    body::before, body::after, .ambient-glow, .ambient-aurora::before, .ambient-aurora::after,
+    .topbar-stamp, .track-row.playing, .ao-track-item.playing, .track-row.playing::after, .ao-track-item.playing::after,
+    .mini-player::after, body.fx-playing .mp-play, .cover-title, .cover-pane-inner::before,
+    .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom { animation: none !important; }
+    body::after, .mini-player::after, .cover-pane-inner::before, .fx-flash, .fx-spot { display: none !important; }
+    .loading-log div { opacity: 1; clip-path: none; }
+    .cover-img, .track-row::before, .track-row .t-title, .album-tab, .loading-screen, .mp-progress, .mp-vol-slider { transition: none !important; }
+    .cover-img.swap { transform: none; filter: none; }
+    .album-tab:hover, .track-row:hover .t-title { transform: none; }
+  }
 </style>
 </head>
 <body data-album="1">
 
 <div class="loading-screen" id="loadingScreen">
-  <div class="loading-mark">⬡</div>
+  <div class="loading-core"><div class="loading-ring"></div><div class="loading-ring r2"></div><div class="loading-mark">⬡</div></div>
   <div class="loading-title">AETHER ODYSSEY</div>
   <div class="loading-sub">Loading archive assets<span id="loadingPct">&nbsp;0%</span></div>
   <div class="loading-bar"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+  <button type="button" class="loading-skip" id="loadingSkip" hidden>Enter archive ›</button>
+  <div class="loading-log" aria-hidden="true">
+    <div>› Init Elysium archive node</div>
+    <div>› Handshake: Aether telemetry … ok</div>
+    <div>› Decrypting saga records I–VI</div>
+    <div>› Syncing ambient field</div>
+  </div>
 </div>
 
 <div class="ambient-wallpaper" id="ambientWallpaper">
@@ -876,10 +1172,14 @@
   <div class="ambient-img-dof" id="ambientImgDof"></div>
   <div class="ambient-bloom" id="ambientBloom"></div>
   <div class="ambient-glow" id="ambientGlow"></div>
+  <div class="ambient-aurora" id="ambientAurora"></div>
   <canvas class="ambient-mist" id="ambientMist"></canvas>
   <canvas class="ambient-particles" id="ambientParticles"></canvas>
   <div class="ambient-feather"></div>
 </div>
+
+<div class="fx-flash" id="fxFlash" aria-hidden="true"></div>
+<div class="fx-spot" id="fxSpot" aria-hidden="true"></div>
 
 <div class="app">
 
@@ -2840,6 +3140,7 @@ let ambientT = 0;
 let ambientMouseX = 0, ambientMouseY = 0;
 let ambientActive = false;
 let ambientRaf = null;
+const FX_REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)');
 let ambientCurrentAlbum = null;
 
 const ambientThemes = {
@@ -3196,7 +3497,8 @@ function ambientLoop() {
   drawAmbientMist();
   drawAmbientParticles();
   applyAmbientParallax();
-  ambientRaf = requestAnimationFrame(ambientLoop);
+  // Reduced motion: draw a single static frame instead of animating; hidden tab: stop.
+  ambientRaf = (FX_REDUCE.matches || document.hidden) ? null : requestAnimationFrame(ambientLoop);
 }
 
 function setAmbientWallpaper(albumNum) {
@@ -3211,60 +3513,101 @@ function setAmbientWallpaper(albumNum) {
     ambientActive = true;
     ambientWallpaper.classList.add('active');
     if (!ambientRaf) ambientLoop();
+  } else if (FX_REDUCE.matches) {
+    ambientLoop(); // redraw the static frame for the new album
   }
 }
 
 // ── PRELOADER ──
+// Holds the loading screen until the artwork visible on first paint is downloaded AND decoded,
+// then warms everything else in the background in priority order (one tier at a time so the
+// big wallpapers never steal bandwidth from what's on screen).
+const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (kept alive so the browser keeps it hot)
+function aoPreloadImage(url) {
+  if (AO_IMAGE_CACHE.has(url)) return AO_IMAGE_CACHE.get(url).promise;
+  const img = new Image();
+  img.decoding = 'async';
+  const promise = new Promise(resolve => {
+    img.onload = () => {
+      // decode() guarantees the bitmap is ready, so it paints instantly when the UI uses it
+      (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => resolve(true));
+    };
+    img.onerror = () => resolve(false); // missing file: count it as done, the UI has an SVG fallback
+  });
+  img.src = url;
+  AO_IMAGE_CACHE.set(url, { img, promise });
+  return promise;
+}
+
 (function () {
   const loadingScreen = document.getElementById('loadingScreen');
   const loadingPct = document.getElementById('loadingPct');
   const loadingBarFill = document.getElementById('loadingBarFill');
+  const loadingSkip = document.getElementById('loadingSkip');
 
-  // Critical: every wallpaper + every album cover — these are seen immediately when switching albums.
-  const criticalUrls = [];
-  Object.values(ambientThemes).forEach(t => criticalUrls.push(t.image));
-  Object.values(ALBUMS).forEach(a => criticalUrls.push(a.cover));
+  const STALL_TIMEOUT_MS = 20000; // no asset finished for 20s → stop waiting (dead/very slow connection)
+  const HARD_TIMEOUT_MS  = 90000; // absolute ceiling, whatever happens
+  const SKIP_AFTER_MS    = 10000; // offer a manual "enter" button on slow connections
 
-  let loaded = 0;
-  const total = criticalUrls.length;
+  const startAlbum = state.album;
+  const uniq = arr => [...new Set(arr.filter(Boolean))];
 
-  function updateProgress() {
-    loaded++;
-    const pct = Math.round((loaded / total) * 100);
-    loadingPct.textContent = ` ${pct}%`;
+  // Tier 1 — on screen at first paint: every album cover (album tabs show them as backgrounds,
+  // and the current one fills the artwork pane) + the current album's wallpaper.
+  const critical = uniq([
+    ALBUMS[startAlbum] && ALBUMS[startAlbum].cover,
+    ambientThemes[startAlbum] && ambientThemes[startAlbum].image,
+    ...Object.values(ALBUMS).map(a => a.cover),
+  ]);
+
+  let done = 0, finished = false, lastProgressAt = performance.now();
+  function setProgress() {
+    const pct = Math.round((done / critical.length) * 100);
+    loadingPct.textContent = '\u00a0' + pct + '%';
     loadingBarFill.style.width = pct + '%';
-    if (loaded >= total) finishLoading();
   }
+  setProgress();
 
-  function finishLoading() {
+  function finishLoading(reason) {
+    if (finished) return;
+    finished = true;
+    clearInterval(watchdog);
+    clearTimeout(skipTimer);
+    if (reason !== 'complete') console.warn('Loader dismissed early (' + reason + '); ' + done + '/' + critical.length + ' critical assets ready.');
     loadingScreen.classList.add('hidden');
     setTimeout(() => loadingScreen.remove(), 700);
-    backgroundPreloadTrackArt();
+    backgroundPreload();
   }
 
-  criticalUrls.forEach(url => {
-    const img = new Image();
-    img.onload = updateProgress;
-    img.onerror = updateProgress; // don't let a missing file hang the loading screen forever
-    img.src = url;
+  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve();
+  Promise.all([
+    ...critical.map(url => aoPreloadImage(url).then(() => { done++; lastProgressAt = performance.now(); setProgress(); })),
+    Promise.race([fontsReady, new Promise(r => setTimeout(r, 4000))]),
+  ]).then(() => {
+    // one frame so the decoded art is actually composited before the overlay fades
+    requestAnimationFrame(() => requestAnimationFrame(() => finishLoading('complete')));
   });
 
-  // Safety net: never block the app for more than 6 seconds, even if something 404s silently.
-  setTimeout(finishLoading, 6000);
+  const t0 = performance.now();
+  const watchdog = setInterval(() => {
+    const now = performance.now();
+    if (now - lastProgressAt > STALL_TIMEOUT_MS) finishLoading('stalled');
+    else if (now - t0 > HARD_TIMEOUT_MS) finishLoading('timeout');
+  }, 1000);
+  const skipTimer = setTimeout(() => { if (loadingSkip) loadingSkip.hidden = false; }, SKIP_AFTER_MS);
+  if (loadingSkip) loadingSkip.addEventListener('click', () => finishLoading('skipped'));
 
-  // Non-blocking: quietly warm the browser cache for every track's artwork after the app is usable,
-  // so clicking into a track later doesn't show a pop-in.
-  function backgroundPreloadTrackArt() {
-    const urls = [];
-    Object.values(ALBUMS).forEach(a => a.tracks.forEach(t => { if (t.image) urls.push(t.image); }));
+  // Tier 2+ — after the app is visible: remaining wallpapers (needed on album switch),
+  // then track art for the current album first, then the rest. Two downloads at a time.
+  function backgroundPreload() {
+    const queue = uniq([
+      ...Object.keys(ambientThemes).map(k => ambientThemes[k].image),
+      ...ALBUMS[state.album].tracks.map(t => t.image),
+      ...Object.values(ALBUMS).flatMap(a => a.tracks.map(t => t.image)),
+    ]).filter(u => !AO_IMAGE_CACHE.has(u));
     let i = 0;
-    function loadNext() {
-      if (i >= urls.length) return;
-      const img = new Image();
-      img.onload = img.onerror = () => { i++; loadNext(); };
-      img.src = urls[i];
-    }
-    loadNext();
+    const next = () => { if (i < queue.length) aoPreloadImage(queue[i++]).then(next); };
+    next(); next();
   }
 })();
 
@@ -3275,6 +3618,117 @@ renderTrackNav();
 renderCover();
 renderText();
 initPulseCanvas();
+
+// ══════════════════════════════════════════════
+// ── FX PACK: player chrome, audio-reactive glow, album flash, spotlight, throttling ──
+// ══════════════════════════════════════════════
+(function fxPack() {
+  const body = document.body;
+
+  // Progress / volume fill (drives the glowing gradient fill via --fill)
+  const prog = document.getElementById('mpProgress');
+  const vol = document.getElementById('mpVolume');
+  const syncProg = () => {
+    const d = audioPlayer.duration;
+    const pct = (d && isFinite(d)) ? (audioPlayer.currentTime / d) * 100 : (Number(prog.value) || 0);
+    prog.style.setProperty('--fill', pct.toFixed(2) + '%');
+  };
+  const syncVol = () => {
+    vol.style.setProperty('--fill', (Number(vol.value) || 0) + '%');
+    vol.classList.toggle('is-muted', audioPlayer.muted);
+  };
+  audioPlayer.addEventListener('timeupdate', syncProg);
+  audioPlayer.addEventListener('emptied', syncProg);
+  prog.addEventListener('input', syncProg);
+  vol.addEventListener('input', syncVol);
+  audioPlayer.addEventListener('volumechange', syncVol);
+  syncProg(); syncVol();
+
+  // Playing state → play-button ring + audio-reactive glow loop
+  const aurora = document.getElementById('ambientAurora');
+  const mini = document.getElementById('miniPlayer');
+  let beatBuf = null, beat = 0, fxRaf = 0, lastT = 0;
+  function fxLoop(t) {
+    fxRaf = requestAnimationFrame(fxLoop);
+    if (t - lastT < 33) return; // ~30fps is plenty for a glow
+    lastT = t;
+    let target = 0;
+    if (analyser && !audioPlayer.paused) {
+      if (!beatBuf || beatBuf.length !== analyser.frequencyBinCount) beatBuf = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(beatBuf);
+      let sum = 0;
+      for (let i = 1; i < 8; i++) sum += beatBuf[i];   // low end ≈ kick / bass
+      target = Math.min(1, Math.max(0, (sum / 7 - 110) / 130));
+    }
+    beat += (target - beat) * (target > beat ? 0.55 : 0.12);
+    const v = beat.toFixed(3);
+    aurora.style.setProperty('--beat', v);
+    mini.style.setProperty('--beat', v);
+  }
+  function startFx() { if (!fxRaf && !FX_REDUCE.matches && !document.hidden) { lastT = 0; fxRaf = requestAnimationFrame(fxLoop); } }
+  function stopFx() {
+    if (fxRaf) cancelAnimationFrame(fxRaf);
+    fxRaf = 0; beat = 0;
+    aurora.style.setProperty('--beat', '0');
+    mini.style.setProperty('--beat', '0');
+  }
+  function syncPlaying() {
+    const playing = !audioPlayer.paused;
+    body.classList.toggle('fx-playing', playing);
+    if (playing) startFx(); else stopFx();
+  }
+  ['play', 'playing', 'pause', 'ended', 'emptied'].forEach(ev => audioPlayer.addEventListener(ev, syncPlaying));
+
+  // Album switch → warp flash (only on a real change of album)
+  const flash = document.getElementById('fxFlash');
+  new MutationObserver(recs => {
+    if (FX_REDUCE.matches) return;
+    const now = body.getAttribute('data-album');
+    if (recs.some(r => r.oldValue !== now)) {
+      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+    }
+  }).observe(body, { attributes: true, attributeFilter: ['data-album'], attributeOldValue: true });
+  flash.addEventListener('animationend', () => flash.classList.remove('go'));
+
+  // Cover title: replay the reveal whenever the title text changes
+  const coverTitleEl = document.getElementById('coverTitle');
+  let lastTitle = coverTitleEl.textContent;
+  new MutationObserver(() => {
+    if (coverTitleEl.textContent === lastTitle) return;
+    lastTitle = coverTitleEl.textContent;
+    coverTitleEl.style.animation = 'none'; void coverTitleEl.offsetWidth; coverTitleEl.style.animation = '';
+  }).observe(coverTitleEl, { childList: true, characterData: true, subtree: true });
+
+  // Cursor spotlight over the main panes (desktop + fine pointer only)
+  const spot = document.getElementById('fxSpot');
+  const appMainEl = document.querySelector('.app-main');
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  let sx = 0, sy = 0, spotRaf = 0;
+  window.addEventListener('pointermove', (e) => {
+    if (!finePointer.matches || FX_REDUCE.matches || window.innerWidth <= 980) { body.classList.remove('fx-spot-on'); return; }
+    sx = e.clientX; sy = e.clientY;
+    const r = appMainEl.getBoundingClientRect();
+    body.classList.toggle('fx-spot-on', sy >= r.top && sy <= r.bottom && sx >= r.left && sx <= r.right);
+    if (!spotRaf) spotRaf = requestAnimationFrame(() => {
+      spotRaf = 0;
+      spot.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+    });
+  }, { passive: true });
+  document.documentElement.addEventListener('mouseleave', () => body.classList.remove('fx-spot-on'));
+
+  // Throttle: stop canvas/FX work while the tab is hidden, resume when visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (ambientRaf) { cancelAnimationFrame(ambientRaf); ambientRaf = null; }
+      stopFx();
+    } else {
+      if (ambientActive && !ambientRaf) ambientLoop();
+      syncPlaying();
+    }
+  });
+  // Reduced motion: canvases were cleared by the resize handler, so redraw the static frame
+  window.addEventListener('resize', () => { if (FX_REDUCE.matches && ambientActive) ambientLoop(); });
+})();
 </script>
 </body>
 </html>
