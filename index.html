@@ -187,6 +187,9 @@
     padding: 0.8rem; border-bottom: 1px solid var(--border);
     transition: border-color 0.28s ease;
   }
+  /* Desktop: the track box disappears so the chips stay grid items.
+     Mobile turns it into the row that glides. */
+  .album-tabs-track { display: contents; }
   .album-tab {
     font-family:'Share Tech Mono',monospace;
     border: 1px solid #333; color: #666; cursor: pointer;
@@ -887,10 +890,11 @@
       padding-bottom: 0.75rem;
     }
 
-    /* Library: one horizontal album strip, one vertical track scroller */
+    /* Library: one horizontal album strip, one vertical track scroller.
+       The scroller owns snap and padding. The track is the row that a tap
+       glides with a compositor transform, then commits into scrollLeft. */
     .album-tabs {
-      display: flex; flex-wrap: nowrap; align-items: stretch;
-      gap: 0.65rem;
+      display: block;
       max-height: none;
       padding: 0.7rem calc(50% - 2.7rem);
       overflow-x: auto; overflow-y: hidden;
@@ -901,6 +905,11 @@
       touch-action: pan-x;
       scrollbar-width: none;
       flex-shrink: 0;
+    }
+    .album-tabs-track {
+      display: flex; flex-wrap: nowrap; align-items: stretch;
+      gap: 0.65rem;
+      width: max-content;
     }
     .album-tab {
       flex: 0 0 5.4rem; width: 5.4rem; height: 5.4rem;
@@ -1016,13 +1025,24 @@
     /* Full-player transport replaces the sticky bar on this tab only. */
     .app[data-mobile-view="cover"] .mini-player { display: none !important; }
 
-    /* Lyrics: full-bleed reading, clear of the bottom chrome */
-    .text-pane-inner { height: 100%; min-height: 0; }
-    .text-head { padding: 0.7rem 0.9rem 0.65rem; }
+    /* Lyrics: full-bleed reading, clear of the bottom chrome.
+       The pane is a fixed-height column. Only .text-body scrolls, so a long
+       caption never pushes the header, album strip, or player chrome.
+       min-height: 0 lets this flex child shrink below its content (WebKit
+       otherwise grows it, and the shell's overflow:hidden clips the rest). */
+    .text-pane { overflow: hidden; }
+    .text-pane-inner {
+      height: 100%; min-height: 0; overflow: hidden;
+    }
+    .text-head { flex-shrink: 0; padding: 0.7rem 0.9rem 0.65rem; }
     .text-head .th-title { font-size: 1.18rem; }
     .text-nav-btn { width: 2.75rem; height: 2.75rem; }
     .text-body {
+      flex: 1 1 auto;
+      min-height: 0;
       max-height: none;
+      overflow-x: hidden;
+      overflow-y: auto;
       padding: 1.15rem 1.15rem 1.8rem;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
@@ -1032,11 +1052,22 @@
     .track-note, .ao-intro { font-size: 0.88rem; line-height: 1.7; }
     .ao-tagline { font-size: 1.02rem; line-height: 1.65; }
 
-    .track-nav, .text-body, .album-tabs, .cover-content { scrollbar-width: none; }
+    .track-nav, .album-tabs, .cover-content { scrollbar-width: none; }
     .track-nav::-webkit-scrollbar,
-    .text-body::-webkit-scrollbar,
     .album-tabs::-webkit-scrollbar,
     .cover-content::-webkit-scrollbar { display: none; width: 0; height: 0; }
+    /* Lyrics: thin accent bar only while the text overflows. Short captions
+       keep overflow:auto, so they don't reserve an empty gutter. */
+    .text-body {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--accent) 70%, transparent) transparent;
+    }
+    .text-body::-webkit-scrollbar { width: 4px; height: 0; }
+    .text-body::-webkit-scrollbar-track { background: transparent; }
+    .text-body::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--accent) 70%, transparent);
+      border-radius: 999px;
+    }
 
     /* Default resting order: library | now playing | lyrics, left to right */
     .sidebar { transform: translateX(-100%); }
@@ -3027,13 +3058,44 @@ function initPulseCanvas() {
 // ── RENDER: ALBUM TABS ──
 // Rebuild only when the set of albums changes. Replacing the buttons on every
 // switch resets scrollLeft to 0, and the following scrollTo then jumps.
+function albumTabsTrack(scroller) {
+  let track = scroller.querySelector(':scope > .album-tabs-track');
+  if (!track) {
+    track = document.createElement('div');
+    track.className = 'album-tabs-track';
+    scroller.appendChild(track);
+  }
+  return track;
+}
+
+// A tap focuses the chip. Without this, the browser scrolls that chip into
+// view in one jump, then the glide tries to finish the trip — the 2–3 stutters.
+function bindAlbumStripFocus(scroller) {
+  if (scroller.dataset.focusBound) return;
+  scroller.dataset.focusBound = '1';
+  let fromTouch = false;
+  scroller.addEventListener('pointerdown', (e) => {
+    fromTouch = e.pointerType === 'touch';
+    const btn = e.target.closest('.album-tab');
+    if (btn) btn.focus({ preventScroll: true });
+  });
+  // Mouse only. preventDefault here blocks the focus scroll; a touch
+  // preventDefault would also swallow the tap and the finger-swipe.
+  scroller.addEventListener('mousedown', (e) => {
+    if (fromTouch) return;
+    if (e.target.closest('.album-tab')) e.preventDefault();
+  });
+}
+
 function renderAlbumTabs() {
   const el = document.getElementById('albumTabs');
+  bindAlbumStripFocus(el);
+  const track = albumTabsTrack(el);
   const nums = Object.keys(ALBUMS);
-  let buttons = el.querySelectorAll(':scope > .album-tab');
+  let buttons = track.querySelectorAll(':scope > .album-tab');
   const built = buttons.length === nums.length;
   if (!built) {
-    el.replaceChildren();
+    track.replaceChildren();
     nums.forEach(numStr => {
       const num = parseInt(numStr, 10);
       const meta = ALBUMS[num];
@@ -3045,9 +3107,9 @@ function renderAlbumTabs() {
       btn.innerHTML = `<span class="num">${meta.roman}</span><span class="title-text">${meta.title}</span>`;
       btn.setAttribute('aria-label', 'Album ' + meta.roman + ': ' + meta.title);
       btn.addEventListener('click', () => selectAlbum(num));
-      el.appendChild(btn);
+      track.appendChild(btn);
     });
-    buttons = el.querySelectorAll(':scope > .album-tab');
+    buttons = track.querySelectorAll(':scope > .album-tab');
   }
   buttons.forEach(btn => {
     const num = btn.dataset.album;
@@ -3057,43 +3119,95 @@ function renderAlbumTabs() {
   scrollActiveAlbumChip(built);
 }
 
+// One glide at a time. A main-thread scrollLeft loop hitch-steps while the
+// album morph is busy (frames drop, then the clock catches up in 2–3 jumps).
+// The row translates on the compositor for the same --album-morph ease, with
+// snap lifted so it cannot restage the motion, then the offset is committed
+// into scrollLeft in one frame.
 let albumChipScrollGen = 0;
+let albumChipGlide = null;
+
+function trackTranslateX(track) {
+  const tr = getComputedStyle(track).transform;
+  if (!tr || tr === 'none') return 0;
+  try { return new DOMMatrixReadOnly(tr).m41 || 0; } catch (e) { return 0; }
+}
+
+function commitAlbumChipGlide(visualDx) {
+  const glide = albumChipGlide;
+  if (!glide) return;
+  albumChipGlide = null;
+  const { scroller, track, from, onDown } = glide;
+  scroller.removeEventListener('pointerdown', onDown);
+  const shift = visualDx == null ? glide.dx : visualDx;
+  scroller.style.scrollSnapType = 'none';
+  scroller.style.scrollBehavior = 'auto';
+  scroller.scrollTo({ left: from - shift, behavior: 'auto' });
+  if (glide.anim) glide.anim.cancel();
+  track.style.transform = '';
+  // Restore snap on the next frame unless a newer glide already owns the strip.
+  // Captured after any interrupt bump so a finger-up still gets snap back,
+  // while a tap that starts the next glide is left alone.
+  const token = albumChipScrollGen;
+  requestAnimationFrame(() => {
+    if (albumChipScrollGen !== token || albumChipGlide) return;
+    scroller.style.scrollSnapType = '';
+    scroller.style.scrollBehavior = '';
+  });
+}
+
 function scrollActiveAlbumChip(smooth) {
-  if (window.innerWidth > 980) return;
   const scroller = document.getElementById('albumTabs');
-  const active = scroller && scroller.querySelector('.album-tab[class*="active-"]');
+  if (!scroller) return;
+  if (albumChipGlide) {
+    const dx = trackTranslateX(albumChipGlide.track);
+    albumChipScrollGen++;
+    commitAlbumChipGlide(dx);
+  }
+  if (window.innerWidth > 980) {
+    scroller.style.scrollSnapType = '';
+    scroller.style.scrollBehavior = '';
+    return;
+  }
+  const active = scroller.querySelector('.album-tab[class*="active-"]');
   if (!active) return;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const delta = active.getBoundingClientRect().left - scroller.getBoundingClientRect().left;
   const maxLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
   const left = Math.max(0, Math.min(maxLeft, scroller.scrollLeft + delta - (scroller.clientWidth - active.offsetWidth) / 2));
-  const useSmooth = !!(smooth && !reduceMotion) && Math.abs(scroller.scrollLeft - left) >= 1;
+  const from = scroller.scrollLeft;
+  const useSmooth = !!(smooth && !reduceMotion) && Math.abs(from - left) >= 1;
   if (!useSmooth) {
+    scroller.style.scrollSnapType = 'none';
+    scroller.style.scrollBehavior = 'auto';
+    if (Math.abs(from - left) >= 1) scroller.scrollTo({ left, behavior: 'auto' });
     scroller.style.scrollSnapType = '';
-    if (Math.abs(scroller.scrollLeft - left) >= 1) scroller.scrollTo({ left, behavior: 'auto' });
+    scroller.style.scrollBehavior = '';
     return;
   }
-  // scroll-snap-type: mandatory swallows scrollTo({behavior:'smooth'}) on
-  // iOS Safari and Chrome Android, so the strip jumps. Lift snap for one glide.
   const gen = ++albumChipScrollGen;
-  const from = scroller.scrollLeft;
+  const dx = from - left;
+  const track = albumTabsTrack(scroller);
+  const easing = getComputedStyle(document.documentElement).getPropertyValue('--album-ease').trim() || 'cubic-bezier(0.42, 0, 0.2, 1)';
   scroller.style.scrollSnapType = 'none';
   scroller.style.scrollBehavior = 'auto';
-  void scroller.offsetWidth;
-  const duration = albumMorphMs();
-  const started = performance.now();
-  const tick = (now) => {
-    if (gen !== albumChipScrollGen) return;
-    const t = Math.min(1, (now - started) / duration);
-    scroller.scrollLeft = from + (left - from) * albumEase(t);
-    if (t < 1) requestAnimationFrame(tick);
-    else {
-      scroller.scrollLeft = left;
-      scroller.style.scrollSnapType = '';
-      scroller.style.scrollBehavior = '';
-    }
+  const anim = track.animate(
+    [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(' + dx + 'px,0,0)' }],
+    { duration: albumMorphMs(), easing, fill: 'forwards' }
+  );
+  const glide = { gen, anim, scroller, track, from, dx, onDown: null };
+  const onDown = () => {
+    if (albumChipGlide !== glide) return;
+    albumChipScrollGen++;
+    commitAlbumChipGlide(trackTranslateX(track));
   };
-  requestAnimationFrame(tick);
+  glide.onDown = onDown;
+  albumChipGlide = glide;
+  scroller.addEventListener('pointerdown', onDown);
+  anim.finished.then(() => {
+    if (albumChipGlide !== glide) return;
+    commitAlbumChipGlide(dx);
+  }).catch(() => {});
 }
 
 // ── RENDER: TRACK NAV ──
@@ -3377,22 +3491,6 @@ function albumMorphMs() {
   const n = parseFloat(raw);
   if (!isFinite(n) || n <= 0) return 1000;
   return raw.endsWith('ms') ? n : n * 1000;
-}
-
-// cubic-bezier(.42, 0, .2, 1) — same curve as --album-ease.
-function albumEase(x) {
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
-  const cx = 3 * 0.42, bx = 3 * (0.2 - 0.42) - cx, ax = 1 - cx - bx;
-  const cy = 0, by = 3, ay = 1 - cy - by;
-  let t = x;
-  for (let i = 0; i < 6; i++) {
-    const sx = ((ax * t + bx) * t + cx) * t;
-    const dx = (3 * ax * t + 2 * bx) * t + cx;
-    if (Math.abs(sx - x) < 1e-4 || Math.abs(dx) < 1e-4) break;
-    t = Math.min(1, Math.max(0, t - (sx - x) / dx));
-  }
-  return ((ay * t + by) * t + cy) * t;
 }
 
 function prefersReducedMotion() {
@@ -3863,14 +3961,19 @@ window.addEventListener('resize', () => {
 
 // ── SWIPE BETWEEN MOBILE TABS ──
 // Axis lock: a gesture that starts vertical stays a scroll; only a clearly
-// horizontal flick changes tabs. Album chips and controls own their own drags.
+// horizontal flick changes tabs. Album chips, controls, and an overflowing
+// lyrics pane own their own drags so a finger on the text never calls
+// preventDefault and cancels that scroll.
 const mobileTabOrder = ['tracks', 'cover', 'lyrics'];
 const SWIPE_LOCK = 14;
 const SWIPE_COMMIT = 64;
 let swipe = null;
 
 function swipeBlockedTarget(target) {
-  return !!(target && target.closest && target.closest('.album-tabs, input, textarea, button, a, .np-transport'));
+  if (!target || !target.closest) return false;
+  if (target.closest('.album-tabs, input, textarea, button, a, .np-transport')) return true;
+  const lyrics = target.closest('.text-body');
+  return !!(lyrics && lyrics.scrollHeight > lyrics.clientHeight + 1);
 }
 
 appMainEl.addEventListener('touchstart', (e) => {
