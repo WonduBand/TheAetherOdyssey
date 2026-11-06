@@ -467,7 +467,6 @@
     display: none; font-size: 0.58rem; letter-spacing: 0.15em; color: var(--accent-deep);
     text-transform: uppercase; margin-bottom: 0.6rem; font-family:'Share Tech Mono', monospace;
   }
-  .cover-bottom { animation: fadeInLeft 0.35s ease both; }
   .cover-title {
     font-family:'Rajdhani',sans-serif; font-size: clamp(2rem, 4vw, 3.4rem); font-weight: 700;
     letter-spacing: 0.08em; text-transform: uppercase; color: #fff; line-height: 1.05;
@@ -739,14 +738,43 @@
   .text-nav-btn:disabled { opacity: 0.25; cursor: default; }
 
   .text-body { flex: 1; overflow-y: auto; padding: 1.2rem 1.6rem 2.2rem; }
-  @keyframes contentFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .text-body > * { animation: contentFadeIn 0.35s ease both; }
-  @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+  /* Track changes only. Titles, the caption block, and the lyric sections share
+     one fade + blur + soft scale on the album-morph clock. No left slide, no
+     per-line delay. Album switches do not add this class — they crossfade on
+     the same 1s ease. The class is removed when the reveal ends so filter/scale
+     do not stick, and .text-body stays overflow-y: auto. */
+  @keyframes textReveal {
+    from { opacity: 0; filter: blur(8px); scale: 0.978; }
+    to { opacity: 1; filter: blur(0); scale: 1; }
+  }
+  body.is-track-reveal .cover-bottom,
+  body.is-track-reveal .text-head .th-num,
+  body.is-track-reveal .text-head .th-title,
+  body.is-track-reveal .text-body > * {
+    animation: textReveal var(--album-morph) var(--album-ease) both;
+  }
+  /* Edge life on the lyrics panel: accent wash at the top and bottom only.
+     One soft pulse, then a long rest. The middle of the gradient is clear so
+     the type stays primary. Opacity only — nothing travels across the words. */
+  .text-pane-inner { position: relative; }
+  .text-pane-inner::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    border-radius: inherit;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--accent-pale) 50%, transparent), transparent 15%),
+      linear-gradient(0deg, color-mix(in srgb, var(--accent) 36%, transparent), transparent 18%);
+    mix-blend-mode: screen;
+    opacity: 0.16;
+    animation: lyricsAmbient 8.5s ease-in-out infinite;
+  }
+  @keyframes lyricsAmbient {
+    0%, 64%, 100% { opacity: 0.14; }
+    76% { opacity: 0.5; }
+  }
   .track-note { display: none; }
 
   @media (min-width: 981px) {
-    .cover-bottom { animation: fadeInLeft 0.4s ease both; }
-    .text-body > * { animation: fadeInLeft 0.4s ease both; }
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
     .cover-pane.track-selected .cover-song-note { display: block; }
@@ -971,7 +999,6 @@
       padding: 0.15rem 1.05rem 0.2rem;
       justify-content: flex-start;
     }
-    .cover-bottom { animation: none; }
     .cover-eyebrow { font-size: 0.55rem; letter-spacing: 0.18em; margin-bottom: 0.28rem; }
     .cover-echo-badge { font-size: 0.5rem; letter-spacing: 0.08em; line-height: 1.35; margin-bottom: 0.35rem; }
     .cover-title { font-size: clamp(1.45rem, 6.4vw, 2rem); letter-spacing: 0.06em; }
@@ -1361,16 +1388,18 @@
   .loading-screen.hidden { transform: scale(1.06); filter: blur(6px); }
 
   /* ── ALIVE COVER: "living depth" ──
-     The artwork floats on its blurred backdrop like a hologram plate:
-       • a very slow breath (scale 1.02 ↔ 1.035 over 18s) + a lazy idle drift (27s)
-       • desktop: the plate follows the cursor a few px and the backdrop slides the other way (parallax depth)
-       • while music plays the plate leans in up to ~0.8% on the bass
-     Motion lives on the image + backdrop only (the wrapper is never transformed, so the clip button and
-     text layers keep their stacking). Breath/drift animate registered custom properties so they compose
-     with the cursor offset, the bass lean and the swap transition. No overlay, no colour flash, no sweep. */
+     Album-cover stills keep a quiet breath. A selected track's still PNG (not the
+     cover clip) gets a slower ken-burns: scale 1.028 ↔ 1.058, a few pixels of
+     drift, and a sub-degree perspective lean. Periods differ so it doesn't loop
+     as a mechanical cycle.
+     Motion lives on the image only (the wrapper is never transformed, so the clip
+     button and text layers keep their stacking). Custom properties compose with
+     the cursor offset, the bass lean, and the swap transition. */
   @property --breath { syntax: '<number>'; inherits: false; initial-value: 1.025; }
   @property --dx { syntax: '<length>'; inherits: false; initial-value: 0px; }
   @property --dy { syntax: '<length>'; inherits: false; initial-value: 0px; }
+  @property --lean-x { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  @property --lean-y { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
   .cover-img-wrap { --par-x: 0px; --par-y: 0px; --beat: 0; }
   .cover-img {
     scale: calc(var(--breath) + var(--beat) * 0.008);
@@ -1384,6 +1413,27 @@
     50% { --dx: 2px; --dy: 3px; }
     75% { --dx: 3px; --dy: -2px; }
   }
+  /* Track stills only. The cover clip hides this image; album-cover view stays on the quieter breath. */
+  .cover-pane.track-selected .cover-img:not(.cover-img-morph) {
+    transform: perspective(1400px) rotateX(var(--lean-x)) rotateY(var(--lean-y));
+    transform-origin: 50% 46%;
+    animation:
+      fxTrackBreath 24s ease-in-out infinite,
+      fxTrackDrift 36s ease-in-out infinite,
+      fxTrackLean 30s ease-in-out infinite;
+  }
+  @keyframes fxTrackBreath { 0%, 100% { --breath: 1.028; } 50% { --breath: 1.058; } }
+  @keyframes fxTrackDrift {
+    0%, 100% { --dx: 0px; --dy: 0px; }
+    28% { --dx: -6px; --dy: 3px; }
+    60% { --dx: 5px; --dy: -4px; }
+    82% { --dx: 2px; --dy: 5px; }
+  }
+  @keyframes fxTrackLean {
+    0%, 100% { --lean-x: 0deg; --lean-y: 0deg; }
+    35% { --lean-x: 0.5deg; --lean-y: -0.4deg; }
+    70% { --lean-x: -0.45deg; --lean-y: 0.5deg; }
+  }
   @media (min-width: 981px) {
     .cover-backdrop { translate: calc(var(--par-x) * -1.2) calc(var(--par-y) * -1.2); }
   }
@@ -1393,8 +1443,9 @@
     .cover-img-wrap { overflow: hidden; }   /* keep the breathing art inside its frame on the mobile Cover tab */
   }
   @media (prefers-reduced-motion: reduce) {
-    .cover-img { animation: none !important; scale: none !important; translate: none !important; }
+    .cover-img { animation: none !important; scale: none !important; translate: none !important; transform: none !important; }
     .cover-backdrop { translate: none !important; }
+    .text-pane-inner::after { animation: none !important; }
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1624,6 +1675,7 @@
     animation: none !important;
     scale: none !important;
     translate: none !important;
+    transform: none !important;
   }
   .cover-img-morph.on { opacity: 0.92; }
   .cover-backdrop-morph { z-index: 0; }
@@ -1636,7 +1688,8 @@
     .ambient-shafts,
     .topbar-stamp, .track-row.playing, .ao-track-item.playing, .track-row.playing::after, .ao-track-item.playing::after,
     .mini-player::after, body.fx-playing .mp-play, .cover-title,
-    .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom { animation: none !important; }
+    .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom,
+    .text-head .th-title, .text-head .th-num, .text-pane-inner::after { animation: none !important; }
     body::after, .mini-player::after, .fx-flash, .fx-spot { display: none !important; }
     .loading-log div { opacity: 1; clip-path: none; }
     body.is-album-morph .album-morph-live,
@@ -3283,10 +3336,6 @@ function renderCover() {
   const coverBottom = document.querySelector('.cover-bottom');
   if (coverBottom && document.body.classList.contains('is-album-morph')) {
     snapshotContentMorph(coverBottom);
-  } else if (coverBottom) {
-    coverBottom.style.animation = 'none';
-    void coverBottom.offsetWidth;
-    coverBottom.style.animation = '';
   }
 
   document.getElementById('coverEyebrow').textContent = meta.label;
@@ -3485,6 +3534,7 @@ function renderText() {
 // wallpaper crossfade, cover, track list, and lyrics all start on one 1s ease.
 let albumSwitchToken = 0;
 let albumMorphTimer = 0;
+let trackRevealTimer = 0;
 
 function albumMorphMs() {
   const raw = getComputedStyle(document.documentElement).getPropertyValue('--album-morph').trim() || '1s';
@@ -3555,7 +3605,19 @@ function commitContentMorph() {
   document.querySelectorAll('.is-content-morph').forEach(el => el.classList.remove('is-content-morph'));
 }
 
+function beginTrackReveal() {
+  if (prefersReducedMotion() || document.body.classList.contains('is-album-morph')) return;
+  const root = document.body;
+  root.classList.remove('is-track-reveal');
+  void root.offsetWidth;
+  root.classList.add('is-track-reveal');
+  clearTimeout(trackRevealTimer);
+  trackRevealTimer = setTimeout(() => root.classList.remove('is-track-reveal'), albumMorphMs() + 90);
+}
+
 function beginAlbumMorph() {
+  document.body.classList.remove('is-track-reveal');
+  clearTimeout(trackRevealTimer);
   finishAlbumMorph();
   void document.body.offsetWidth;
   document.body.classList.add('is-album-morph');
@@ -3607,6 +3669,7 @@ function selectTrack(i) {
   renderTrackNav();
   renderCover();
   renderText();
+  beginTrackReveal();
 }
 
 function stepTrack(dir) {
@@ -3693,6 +3756,7 @@ function playTrackDirect(albumNum, idx) {
   renderTrackNav();
   renderCover();
   renderText();
+  beginTrackReveal();
   loadAndPlay(albumNum, idx);
 }
 
