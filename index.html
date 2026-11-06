@@ -24,7 +24,7 @@
   }
 
   body {
-    transition: background 0.5s ease;
+    transition: background 0.28s ease;
   }
 
   body::before {
@@ -105,7 +105,7 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.7rem 1.4rem; border-bottom: 1px solid var(--border);
     background: var(--bg-panel);
-    transition: border-color 0.5s ease, background 0.5s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
     z-index: 10; position: relative;
   }
   .topbar-brand { display: flex; align-items: baseline; gap: 0.8rem; }
@@ -148,8 +148,8 @@
     height: 100%; width: 0%; background: #4db8ff;
     transition: width 0.25s ease;
   }
-  .topbar-sub { font-size:0.58rem; letter-spacing:0.2em; color: var(--text-dim); text-transform:uppercase; transition: color 0.5s ease; }
-  .topbar-stamp { font-size:0.55rem; letter-spacing:0.2em; color: var(--accent); text-transform:uppercase; transition: color 0.5s ease; }
+  .topbar-sub { font-size:0.58rem; letter-spacing:0.2em; color: var(--text-dim); text-transform:uppercase; transition: color 0.28s ease; }
+  .topbar-stamp { font-size:0.55rem; letter-spacing:0.2em; color: var(--accent); text-transform:uppercase; transition: color 0.28s ease; }
   @media (min-width: 981px) {
     .topbar-stamp {
       position: absolute; left: 50%; top: 50%;
@@ -177,13 +177,13 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     min-height: 0;
-    transition: border-color 0.5s ease, background 0.5s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
   }
 
   .album-tabs {
     display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem;
     padding: 0.8rem; border-bottom: 1px solid var(--border);
-    transition: border-color 0.5s ease;
+    transition: border-color 0.28s ease;
   }
   .album-tab {
     font-family:'Share Tech Mono',monospace;
@@ -225,14 +225,14 @@
   }
   .track-row:hover { background: var(--bg-raise); }
   .track-row.active { background: var(--bg-raise); border-left-color: var(--accent); }
-  .track-row .t-num { font-size: 0.58rem; color: var(--accent-deep); min-width: 1.6rem; transition: color 0.5s ease; }
+  .track-row .t-num { font-size: 0.58rem; color: var(--accent-deep); min-width: 1.6rem; transition: color 0.28s ease; }
   .track-row .t-title {
     font-family:'Rajdhani',sans-serif; font-weight:600; letter-spacing:0.06em;
     font-size: 0.82rem; text-transform: uppercase; color: #99a; flex:1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .track-row.active .t-title { color: var(--accent-pale); }
-  .track-row .t-inst { font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; transition: color 0.5s ease; }
+  .track-row .t-inst { font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; transition: color 0.28s ease; }
   .chapter-divider {
     display: flex; align-items: baseline; gap: 0.5rem;
     padding: 0.7rem 0.6rem 0.25rem; margin-top: 0.3rem;
@@ -252,15 +252,15 @@
   }
   .cover-row:hover { background: var(--bg-raise); border-color: var(--accent-deep); }
   .cover-row.active { background: var(--bg-raise); border-left-color: var(--accent); border-color: var(--accent-deep); }
-  .cover-row .c-icon { font-size: 0.85rem; color: var(--accent); transition: color 0.5s ease; }
+  .cover-row .c-icon { font-size: 0.85rem; color: var(--accent); transition: color 0.28s ease; }
   .cover-row .c-label { font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:0.15em; font-size: 0.78rem; text-transform: uppercase; color: #ccd; }
   .cover-row.active .c-label { color: var(--accent-pale); }
-  .track-nav-divider { height: 1px; background: var(--border); opacity: 0.6; margin: 0 0.6rem 0.5rem; transition: background 0.5s ease; }
+  .track-nav-divider { height: 1px; background: var(--border); opacity: 0.6; margin: 0 0.6rem 0.5rem; transition: background 0.28s ease; }
 
   .sidebar-foot {
     padding: 0.6rem 1rem; font-size: 0.52rem; letter-spacing: 0.15em;
     color: #333; border-top: 1px solid var(--border); text-transform: uppercase;
-    transition: border-color 0.5s ease;
+    transition: border-color 0.28s ease;
   }
   @media (max-width: 980px) {
     .sidebar-foot { display: none; }
@@ -351,7 +351,7 @@
     display: none; align-items: center; gap: 1rem;
     padding: 0.55rem 1.4rem;
     background: var(--bg-panel); border-top: 1px solid var(--border);
-    transition: border-color 0.5s ease, background 0.5s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
   }
   .mini-player.active { display: flex; animation: miniPlayerIn 0.4s cubic-bezier(.4,0,.2,1); }
   @keyframes miniPlayerIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -377,22 +377,22 @@
   .mp-play { width: 2.3rem; height: 2.3rem; font-size: 0.8rem; }
   .mp-info { min-width: 0; flex: 1 1 auto; max-width: 240px; overflow: hidden; }
   .mp-title { font-family:'Rajdhani',sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mp-album { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.5s ease; }
+  .mp-album { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.28s ease; }
   .mp-progress {
     flex: 1; min-width: 0; height: 3px; -webkit-appearance: none; appearance: none;
     background: var(--border); border-radius: 2px; cursor: pointer; outline: none;
-    transition: background 0.5s ease;
+    transition: background 0.28s ease;
   }
   .mp-progress::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); cursor: pointer; }
   .mp-progress::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
-  .mp-time { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.05em; white-space: nowrap; flex-shrink: 0; transition: color 0.5s ease; }
+  .mp-time { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.05em; white-space: nowrap; flex-shrink: 0; transition: color 0.28s ease; }
 
   .mp-volume { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
   .mp-vol-btn { font-size: 0.85rem; }
   .mp-vol-slider {
     width: 70px; height: 3px; -webkit-appearance: none; appearance: none;
     background: var(--border); border-radius: 2px; cursor: pointer; outline: none;
-    transition: background 0.5s ease;
+    transition: background 0.28s ease;
   }
   .mp-vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); cursor: pointer; }
   .mp-vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
@@ -425,7 +425,7 @@
   .cover-pane {
     position: relative; overflow: hidden;
     border-right: 1px solid var(--border);
-    transition: border-color 0.5s ease;
+    transition: border-color 0.28s ease;
     display: flex; align-items: stretch; justify-content: stretch;
     grid-column: 3;
   }
@@ -444,7 +444,7 @@
   .cover-fallback .placeholder-caption {
     position: absolute; bottom: 0.7rem; right: 0.9rem; z-index: 3;
     font-size: 0.5rem; letter-spacing: 0.15em; color: var(--text-dim); opacity: 0.6;
-    text-transform: uppercase; transition: color 0.5s ease; pointer-events: none;
+    text-transform: uppercase; transition: color 0.28s ease; pointer-events: none;
   }
   .cover-scrim {
     position: absolute; inset: 0;
@@ -457,7 +457,7 @@
   }
   .cover-top { display:flex; justify-content: space-between; font-size: 0.58rem; letter-spacing: 0.15em; color: rgba(255,255,255,0.55); text-transform: uppercase; }
   .cover-bottom { }
-  .cover-eyebrow { font-size: 0.62rem; letter-spacing: 0.35em; color: var(--accent); text-transform: uppercase; margin-bottom:0.5rem; transition: color 0.5s ease; }
+  .cover-eyebrow { font-size: 0.62rem; letter-spacing: 0.35em; color: var(--accent); text-transform: uppercase; margin-bottom:0.5rem; transition: color 0.28s ease; }
   .cover-echo-badge {
     display: none; font-size: 0.58rem; letter-spacing: 0.15em; color: var(--accent-deep);
     text-transform: uppercase; margin-bottom: 0.6rem; font-family:'Share Tech Mono', monospace;
@@ -471,7 +471,7 @@
   .cover-tagline { font-size: 0.8rem; font-style: italic; color: #ddd; margin-top: 0.6rem; max-width: 480px; }
   .cover-meta { display:flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.1rem; font-size: 0.58rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
   .cover-song-note { display: none; font-size: 0.85rem; font-style: italic; color: rgba(255,255,255,0.78); line-height: 1.75; max-width: 560px; margin-top: 0.6rem; }
-  .cover-meta span { color: var(--accent); transition: color 0.5s ease; }
+  .cover-meta span { color: var(--accent); transition: color 0.28s ease; }
   .cover-pulse { width: 100%; height: 52px; margin-top: 0.8rem; display:block; }
 
   /* ── COVER ANIMATION CLIP (plays inline inside the artwork frame) ──
@@ -552,13 +552,13 @@
   }
   .text-pane-inner {
     display: flex; flex-direction: column; min-height: 0; flex: 1;
-    background: var(--bg); transition: background 0.5s ease, transform 0.45s ease, opacity 0.4s ease;
+    background: var(--bg); transition: background 0.28s ease, transform 0.45s ease, opacity 0.4s ease;
   }
 
   .cover-pane-inner {
     display: flex; flex-direction: column; width: 100%;
     background: #000;
-    transition: transform 0.45s ease, opacity 0.4s ease, background 0.5s ease;
+    transition: transform 0.45s ease, opacity 0.4s ease, background 0.28s ease;
   }
   @media (min-width: 981px) {
     .cover-pane-inner { height: 100%; }
@@ -596,7 +596,7 @@
       width: var(--lock-w); min-width: var(--lock-w); flex: 0 0 auto;
     }
     .cover-pane-inner, .text-pane-inner {
-      transition: transform 0.45s var(--pane-ease), opacity 0.35s ease, filter 0.45s ease, background 0.5s ease;
+      transition: transform 0.45s var(--pane-ease), opacity 0.35s ease, filter 0.45s ease, background 0.28s ease;
     }
     .cover-pane-inner.collapsed { transform: translateX(-4%) scale(0.985); opacity: 0; filter: blur(3px); pointer-events: none; }
     .text-pane-inner.collapsed  { transform: translateX(4%) scale(0.985);  opacity: 0; filter: blur(3px); pointer-events: none; }
@@ -620,7 +620,7 @@
     content: ''; position: absolute; top: 6%; bottom: 6%; left: 50%; width: 1px;
     transform: translateX(-0.5px);
     background: linear-gradient(180deg, transparent 0%, var(--accent-deep) 16%, var(--accent) 50%, var(--accent-deep) 84%, transparent 100%);
-    opacity: 0.5; transition: opacity 0.4s ease, background 0.5s ease;
+    opacity: 0.5; transition: opacity 0.4s ease, background 0.28s ease;
     pointer-events: none;
   }
   .pane-rail[aria-expanded="false"]::before { opacity: 0.9; }
@@ -660,7 +660,7 @@
     -webkit-backdrop-filter: blur(12px) saturate(150%);
     backdrop-filter: blur(12px) saturate(150%);
     box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 14%, transparent);
-    transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, color 0.5s ease;
+    transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, color 0.28s ease;
   }
   .rail-handle::before { content: none; }
   .rail-handle::after {
@@ -720,11 +720,11 @@
   }
   .text-head {
     padding: 1rem 1.6rem 0.8rem; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 0.8rem; transition: border-color 0.5s ease;
+    display: flex; align-items: center; gap: 0.8rem; transition: border-color 0.28s ease;
   }
-  .text-head .th-num { font-size: 0.62rem; color: var(--accent-deep); letter-spacing: 0.1em; transition: color 0.5s ease; }
+  .text-head .th-num { font-size: 0.62rem; color: var(--accent-deep); letter-spacing: 0.1em; transition: color 0.28s ease; }
   .text-head .th-title { font-family:'Rajdhani',sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .text-head .th-badge { font-size: 0.5rem; letter-spacing: 0.15em; padding: 0.25rem 0.55rem; border: 1px solid var(--border-dim); color: var(--text-dim); text-transform: uppercase; white-space: nowrap; transition: all 0.5s ease; }
+  .text-head .th-badge { font-size: 0.5rem; letter-spacing: 0.15em; padding: 0.25rem 0.55rem; border: 1px solid var(--border-dim); color: var(--text-dim); text-transform: uppercase; white-space: nowrap; transition: all 0.28s ease; }
   .text-nav-btn {
     background: transparent; border: 1px solid var(--border); color: var(--text-dim);
     width: 1.8rem; height: 1.8rem; cursor: pointer; font-size: 0.75rem; flex-shrink:0;
@@ -754,14 +754,14 @@
     padding: 0.75rem 1rem; margin-bottom: 1.3rem;
     background: rgba(255,255,255,0.02); border-left: 2px solid var(--accent);
     font-size: 0.75rem; color: #999; font-style: italic; line-height: 1.7;
-    transition: border-color 0.5s ease;
+    transition: border-color 0.28s ease;
   }
 
   .lyric-section { margin-bottom: 1.2rem; }
   .sec-label {
     font-size: 0.6rem; letter-spacing: 0.2em; margin-bottom: 0.45rem;
     display: flex; align-items: center; gap: 0.5rem; color: var(--accent);
-    text-transform: uppercase; transition: color 0.5s ease;
+    text-transform: uppercase; transition: color 0.28s ease;
   }
   .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); opacity: 0.5; max-width: 80px; }
   .sec-lines { font-size: 0.85rem; line-height: 1.85; white-space: pre-line; color: #f8f8ff; padding-left: 0.5rem; }
@@ -776,7 +776,7 @@
   .lyric-section.motif .sec-lines { font-size: 0.72rem; font-style: italic; }
 
   .instrumental-view { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; padding: 2.4rem 1rem; }
-  .instrumental-view .il { font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); transition: color 0.5s ease; }
+  .instrumental-view .il { font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); transition: color 0.28s ease; }
   .instrumental-view .id { font-size: 0.82rem; line-height: 1.8; font-style: italic; color: #999; max-width: 420px; }
   .instrumental-view svg { width: 100%; max-width: 360px; opacity: 0.45; }
 
@@ -786,20 +786,20 @@
     padding: 0.9rem 1.1rem; margin-bottom: 1.6rem;
     background: rgba(255,255,255,0.02); border-left: 2px solid var(--accent);
     font-size: 0.8rem; color: #999; font-style: italic; line-height: 1.75;
-    transition: border-color 0.5s ease;
+    transition: border-color 0.28s ease;
   }
-  .ao-meta { display: flex; flex-wrap: wrap; gap: 1.2rem 1.8rem; margin-bottom: 1.6rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--border); transition: border-color 0.5s ease; }
-  .ao-meta div { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; transition: color 0.5s ease; }
-  .ao-meta span { color: var(--accent); display: block; margin-top: 0.2rem; font-size: 0.75rem; transition: color 0.5s ease; }
-  .ao-list-label { font-size: 0.6rem; letter-spacing: 0.25em; color: var(--border); text-transform: uppercase; margin-bottom: 0.7rem; transition: color 0.5s ease; }
+  .ao-meta { display: flex; flex-wrap: wrap; gap: 1.2rem 1.8rem; margin-bottom: 1.6rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--border); transition: border-color 0.28s ease; }
+  .ao-meta div { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; transition: color 0.28s ease; }
+  .ao-meta span { color: var(--accent); display: block; margin-top: 0.2rem; font-size: 0.75rem; transition: color 0.28s ease; }
+  .ao-list-label { font-size: 0.6rem; letter-spacing: 0.25em; color: var(--border); text-transform: uppercase; margin-bottom: 0.7rem; transition: color 0.28s ease; }
   .ao-track-item {
     display: flex; align-items: center; gap: 0.8rem; padding: 0.5rem 0.3rem;
     cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;
   }
   .ao-track-item:hover { background: var(--bg-raise); }
-  .ao-track-item .aot-num { font-size: 0.62rem; color: var(--accent-deep); min-width: 1.6rem; transition: color 0.5s ease; }
+  .ao-track-item .aot-num { font-size: 0.62rem; color: var(--accent-deep); min-width: 1.6rem; transition: color 0.28s ease; }
   .ao-track-item .aot-title { font-family:'Rajdhani',sans-serif; font-weight:600; letter-spacing:0.05em; font-size: 0.88rem; text-transform: uppercase; color: #bbc; }
-  .ao-track-item .aot-inst { margin-left: auto; font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; transition: color 0.5s ease; }
+  .ao-track-item .aot-inst { margin-left: auto; font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; transition: color 0.28s ease; }
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -811,7 +811,7 @@
     display: none;
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
-    transition: border-color 0.5s ease, background 0.5s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .mobile-tab-btn {
@@ -1103,10 +1103,10 @@
   @property --border-dim  { syntax: '<color>'; inherits: true; initial-value: #0d3b6e; }
   @property --text-dim    { syntax: '<color>'; inherits: true; initial-value: #5a7fa8; }
   body {
-    transition: background 0.5s ease,
-      --accent 0.7s ease, --accent-deep 0.7s ease, --accent-pale 0.7s ease,
-      --bg 0.7s ease, --bg-panel 0.7s ease, --bg-raise 0.7s ease,
-      --border 0.7s ease, --border-dim 0.7s ease, --text-dim 0.7s ease;
+    transition: background 0.28s ease,
+      --accent 0.28s ease, --accent-deep 0.28s ease, --accent-pale 0.28s ease,
+      --bg 0.28s ease, --bg-panel 0.28s ease, --bg-raise 0.28s ease,
+      --border 0.28s ease, --border-dim 0.28s ease, --text-dim 0.28s ease;
   }
 
   /* ── Ambient: accent aurora wash (gradients only, transform-animated) ── */
@@ -1145,18 +1145,10 @@
   }
   @keyframes fxScanSweep { 0% { transform: translateY(-25vh); } 55%, 100% { transform: translateY(110vh); } }
 
-  /* ── Album switch: warp flash ── */
+  /* Warp flash overlay is inert. Album switches do not add .go. */
   .fx-flash {
     position: fixed; inset: 0; pointer-events: none; z-index: 8999; opacity: 0;
-    background:
-      radial-gradient(ellipse 60% 45% at 50% 45%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
-      linear-gradient(180deg, transparent 49.6%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, transparent 50.4%);
-  }
-  .fx-flash.go { animation: fxFlash 0.75s cubic-bezier(.22,1,.36,1); }
-  @keyframes fxFlash {
-    0% { opacity: 0; transform: scaleY(0.2); }
-    18% { opacity: 1; transform: scaleY(1); }
-    100% { opacity: 0; transform: scaleY(1.4); }
+    display: none;
   }
 
   /* ── Cursor spotlight over the main panes (desktop, fine pointer) ── */
@@ -1274,9 +1266,9 @@
   .mp-progress::-moz-range-thumb, .mp-vol-slider::-moz-range-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent), 0 0 10px var(--accent); }
 
   /* ── Transitions: cover swap settle, title reveal, staggered lyrics ── */
-  .cover-img { transition: opacity 0.45s ease, transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.6s ease; }
-  .cover-img.swap { transform: scale(1.045); filter: blur(6px) brightness(1.35); }
-  .cover-title { animation: fxTitleReveal 0.75s cubic-bezier(.22,1,.36,1) both; }
+  .cover-img { transition: opacity 0.22s ease, transform 0.24s cubic-bezier(.22,1,.36,1), filter 0.24s ease; }
+  .cover-img.swap { transform: scale(1.02); filter: blur(2px) brightness(1.12); }
+  .cover-title { animation: fxTitleReveal 0.3s cubic-bezier(.22,1,.36,1) both; }
   @keyframes fxTitleReveal {
     from { clip-path: inset(0 100% 0 0); letter-spacing: 0.3em; filter: drop-shadow(0 0 12px var(--accent)); }
     to   { clip-path: inset(0 0 0 0);    letter-spacing: 0.08em; filter: none; }
@@ -1292,7 +1284,7 @@
   @media (min-width: 981px) {
     .app-main { --pane-ease: cubic-bezier(.22,1,.36,1); transition: grid-template-columns 0.42s var(--pane-ease); }
     .cover-pane-inner:not(.collapsed), .text-pane-inner:not(.collapsed) {
-      transition: transform 0.55s cubic-bezier(.34,1.5,.64,1), opacity 0.35s ease 0.06s, filter 0.4s ease, background 0.5s ease;
+      transition: transform 0.55s cubic-bezier(.34,1.5,.64,1), opacity 0.35s ease 0.06s, filter 0.4s ease, background 0.28s ease;
     }
     .cover-pane-inner { position: relative; }
     /* HUD corner brackets */
@@ -4358,7 +4350,7 @@ renderText();
 initPulseCanvas();
 
 // ══════════════════════════════════════════════
-// ── FX PACK: player chrome, audio-reactive glow, album flash, spotlight, throttling ──
+// ── FX PACK: player chrome, audio-reactive glow, spotlight, throttling ──
 // ══════════════════════════════════════════════
 (function fxPack() {
   const body = document.body;
@@ -4425,16 +4417,8 @@ initPulseCanvas();
   }
   ['play', 'playing', 'pause', 'ended', 'emptied'].forEach(ev => audioPlayer.addEventListener(ev, syncPlaying));
 
-  // Album switch → warp flash (only on a real change of album)
-  const flash = document.getElementById('fxFlash');
-  new MutationObserver(recs => {
-    if (FX_REDUCE.matches) return;
-    const now = body.getAttribute('data-album');
-    if (recs.some(r => r.oldValue !== now)) {
-      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-    }
-  }).observe(body, { attributes: true, attributeFilter: ['data-album'], attributeOldValue: true });
-  flash.addEventListener('animationend', () => flash.classList.remove('go'));
+  // Album switches no longer play the full-screen warp flash.
+  // #fxFlash stays in the DOM and is left inert (no .go, no observer).
 
   // Cover title: replay the reveal whenever the title text changes
   const coverTitleEl = document.getElementById('coverTitle');
