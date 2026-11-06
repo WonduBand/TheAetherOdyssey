@@ -1530,7 +1530,7 @@
     .text-head {
       background: color-mix(in srgb, var(--bg) 42%, transparent);
     }
-    .sec-lines, .track-row .t-title, .ao-tagline, .cover-row .c-label {
+    .track-row .t-title, .ao-tagline, .cover-row .c-label {
       text-shadow: 0 1px 2px rgba(0,0,0,0.72);
     }
 
@@ -1763,6 +1763,177 @@
   }
   @media (max-width: 980px) and (prefers-reduced-motion: reduce) {
     .album-tabs { scroll-behavior: auto; }
+  }
+
+  /* ── Type: A titles + captions, B lyrics ──
+     Headlines are a spaced console sans (Rajdhani, already loaded): album-accent
+     outer glow and one hairline. Short meta stays tiny tracked uppercase.
+     Lyric lines are the same sans in sentence case, with a soft bloom and no
+     scan, strobe, or chromatic fringe. The lyrics-panel edge pulse is unchanged.
+     Long lore notes stay sentence case so a paragraph does not become a caps wall. */
+  .cover-title,
+  .text-head .th-title,
+  .mp-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .cover-title {
+    --title-mark: 0.72rem;
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    padding: 0 0 0.28em var(--title-mark);
+    letter-spacing: 0.12em;
+    line-height: 1.02;
+    text-shadow:
+      0 2px 12px rgba(0,0,0,0.88),
+      0 0 16px color-mix(in srgb, var(--accent) 62%, transparent),
+      0 0 36px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .cover-title::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.06em; bottom: 0.34em;
+    width: 1px;
+    background: var(--accent);
+    box-shadow: 0 0 7px var(--accent);
+    pointer-events: none;
+  }
+  .cover-title::after {
+    content: '';
+    position: absolute;
+    left: var(--title-mark); right: 0; bottom: 0.06em;
+    height: 1px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    pointer-events: none;
+  }
+  .text-head .th-play-btn { margin-left: auto; }
+  .text-head .th-title {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: calc(100% - 8.5rem);
+    min-width: 0;
+    letter-spacing: 0.11em;
+    padding-bottom: 0.14em;
+    border-bottom: 1px solid var(--accent);
+    box-shadow: 0 5px 10px -7px var(--accent);
+    text-shadow:
+      0 0 12px color-mix(in srgb, var(--accent) 48%, transparent),
+      0 0 26px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  .mp-title {
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  .cover-eyebrow,
+  .cover-echo-badge,
+  .text-head .th-num,
+  .text-head .th-badge,
+  .sec-label,
+  .instrumental-view .il {
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+  .cover-meta,
+  .ao-meta div,
+  .mp-album,
+  .chapter-roman {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .cover-tagline {
+    font-style: normal;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--accent-pale) 82%, #fff);
+    max-width: 38rem;
+  }
+  .cover-song-note,
+  .track-note {
+    font-style: normal;
+    letter-spacing: 0.045em;
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--accent-pale) 62%, #d5dbe6);
+  }
+  .cover-song-note { font-size: 0.72rem; }
+  .track-note { font-size: 0.72rem; }
+
+  .lyric-section .sec-lines {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-style: normal;
+    font-size: 1.08rem;
+    letter-spacing: 0.018em;
+    line-height: 1.72;
+    color: #f4f7ff;
+    opacity: 1;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.55),
+      0 1px 1px rgba(0,0,0,0.7),
+      0 0 12px color-mix(in srgb, var(--accent-pale) 58%, transparent),
+      0 0 26px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .lyric-section.chorus .sec-lines {
+    color: #f8faff;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.7),
+      0 1px 1px rgba(0,0,0,0.55),
+      0 0 14px color-mix(in srgb, var(--accent-pale) 72%, transparent),
+      0 0 30px color-mix(in srgb, var(--accent) 32%, transparent);
+  }
+  .lyric-section.final-chorus .sec-lines,
+  .lyric-section.outro .sec-lines {
+    color: #fff;
+    font-weight: 700;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.8),
+      0 1px 1px rgba(0,0,0,0.5),
+      0 0 16px color-mix(in srgb, var(--accent-pale) 78%, transparent),
+      0 0 32px color-mix(in srgb, var(--accent) 34%, transparent);
+  }
+  .lyric-section.bridge .sec-lines {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-pale);
+    opacity: 0.96;
+  }
+  .lyric-section.motif .sec-lines {
+    font-size: 0.92rem;
+    font-style: italic;
+    font-weight: 400;
+    opacity: 0.9;
+  }
+  .instrumental-view .id {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 400;
+    font-style: italic;
+    color: color-mix(in srgb, var(--accent-pale) 74%, #d0d6e2);
+    text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+
+  @media (max-width: 980px) {
+    .cover-title {
+      --title-mark: 0.58rem;
+      letter-spacing: 0.08em;
+      font-size: clamp(1.4rem, 6.2vw, 1.95rem);
+    }
+    .cover-eyebrow,
+    .sec-label,
+    .text-head .th-num { letter-spacing: 0.18em; }
+    .cover-tagline { font-size: 0.58rem; letter-spacing: 0.12em; }
+    .text-head .th-title { letter-spacing: 0.08em; }
+    .lyric-section .sec-lines { font-size: 1.12rem; line-height: 1.74; }
+    .lyric-section.motif .sec-lines { font-size: 0.98rem; }
+  }
+  @media (max-width: 480px) {
+    .text-head .th-title { letter-spacing: 0.06em; }
+    .lyric-section .sec-lines { font-size: 1.08rem; }
   }
 </style>
 </head>
