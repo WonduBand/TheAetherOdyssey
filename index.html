@@ -3802,8 +3802,9 @@ function isRowPlaying(albumNum, idx) {
 function playTrackDirect(albumNum, idx) {
   const meta = ALBUMS[albumNum];
   if (!meta || idx < 0 || idx >= meta.tracks.length) return;
+  loadAndPlay(albumNum, idx);
   if (state.album !== albumNum) {
-    switchAlbum(albumNum, idx, () => loadAndPlay(albumNum, idx));
+    switchAlbum(albumNum, idx);
     return;
   }
   state.track = idx;
@@ -3811,7 +3812,6 @@ function playTrackDirect(albumNum, idx) {
   renderCover();
   renderText();
   beginTrackReveal();
-  loadAndPlay(albumNum, idx);
 }
 
 // Same track already loaded → toggle pause/resume. Different track → start it fresh.
@@ -3824,10 +3824,15 @@ function toggleOrPlay(albumNum, idx) {
 }
 
 function loadAndPlay(albumNum, idx) {
+  const file = trackFileName(albumNum, idx);
+  const src = AUDIO_PATH + file;
+  if (audioPlayer.getAttribute('src') !== src || audioPlayer.error) {
+    audioPlayer.src = src;
+  } else if (playingAlbum === albumNum && playingIdx === idx) {
+    audioPlayer.currentTime = 0;
+  }
   playingAlbum = albumNum;
   playingIdx = idx;
-  const file = trackFileName(albumNum, idx);
-  audioPlayer.src = AUDIO_PATH + file;
   ensureAudioAnalyser();
   audioPlayer.play().catch(err => console.warn('Playback failed — check the file exists:', file, err));
   updateMiniPlayer(albumNum, idx);
@@ -4814,10 +4819,11 @@ function setAmbientWallpaper(albumNum) {
 // then warms everything else in the background in priority order (one tier at a time so the
 // big wallpapers never steal bandwidth from what's on screen).
 const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (kept alive so the browser keeps it hot)
-function aoPreloadImage(url) {
+function aoPreloadImage(url, priority) {
   if (AO_IMAGE_CACHE.has(url)) return AO_IMAGE_CACHE.get(url).promise;
   const img = new Image();
   img.decoding = 'async';
+  if (priority) img.fetchPriority = priority;
   const promise = new Promise(resolve => {
     img.onload = () => {
       // decode() guarantees the bitmap is ready, so it paints instantly when the UI uses it
@@ -4828,6 +4834,12 @@ function aoPreloadImage(url) {
   img.src = url;
   AO_IMAGE_CACHE.set(url, { img, promise });
   return promise;
+}
+
+// Warm the initial track on the player itself without starting playback.
+if (!navigator.connection?.saveData) {
+  audioPlayer.preload = 'auto';
+  audioPlayer.src = AUDIO_PATH + trackFileName(state.album, 0);
 }
 
 (function () {
@@ -4897,7 +4909,7 @@ function aoPreloadImage(url) {
       ...Object.values(ALBUMS).flatMap(a => a.tracks.map(t => t.image)),
     ]).filter(u => !AO_IMAGE_CACHE.has(u));
     let i = 0;
-    const next = () => { if (i < queue.length) aoPreloadImage(queue[i++]).then(next); };
+    const next = () => { if (i < queue.length) aoPreloadImage(queue[i++], 'low').then(next); };
     next(); next();
   }
 })();
