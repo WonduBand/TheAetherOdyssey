@@ -4906,13 +4906,7 @@ function setAmbientWallpaper(albumNum) {
 // Holds the loading screen until the artwork visible on first paint is downloaded AND decoded,
 // then warms everything else in the background in priority order (one tier at a time so the
 // big wallpapers never steal bandwidth from what's on screen).
-const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (covers + wallpapers only)
-function aoIsKeptArtwork(url) {
-  if (!url) return false;
-  for (const k in ambientThemes) if (ambientThemes[k].image === url) return true;
-  for (const a of Object.values(ALBUMS)) if (a.cover === url) return true;
-  return false;
-}
+const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (kept alive so the browser keeps it hot)
 function aoPreloadImage(url) {
   if (AO_IMAGE_CACHE.has(url)) return AO_IMAGE_CACHE.get(url).promise;
   const img = new Image();
@@ -4925,9 +4919,7 @@ function aoPreloadImage(url) {
     img.onerror = () => resolve(false); // missing file: count it as done, the UI has an SVG fallback
   });
   img.src = url;
-  // Pin only album covers and wallpapers. Track-art callers (switchAlbum) can
-  // still wait on decode, but the Image is not retained.
-  if (aoIsKeptArtwork(url)) AO_IMAGE_CACHE.set(url, { img, promise });
+  AO_IMAGE_CACHE.set(url, { img, promise });
   return promise;
 }
 
@@ -4989,35 +4981,17 @@ function aoPreloadImage(url) {
   const skipTimer = setTimeout(() => { if (loadingSkip) loadingSkip.hidden = false; }, SKIP_AFTER_MS);
   if (loadingSkip) loadingSkip.addEventListener('click', () => finishLoading('skipped'));
 
-  // Tier 2+ — after the app is visible: remaining wallpapers (needed on album
-  // switch) are decoded and kept. Track art is only warmed into the HTTP cache
-  // (one at a time, low priority, after the keep-alive set is done) so later
-  // track views hit disk/network cache without pinning decoded bitmaps.
+  // Tier 2+ — after the app is visible: remaining wallpapers (needed on album switch),
+  // then track art for the current album first, then the rest. Two downloads at a time.
   function backgroundPreload() {
-    const keep = uniq([
+    const queue = uniq([
       ...Object.keys(ambientThemes).map(k => ambientThemes[k].image),
-      ...Object.values(ALBUMS).map(a => a.cover),
-    ]);
-    const keepSet = new Set(keep);
-    const keepQueue = keep.filter(u => !AO_IMAGE_CACHE.has(u));
-    const trackQueue = uniq([
       ...ALBUMS[state.album].tracks.map(t => t.image),
       ...Object.values(ALBUMS).flatMap(a => a.tracks.map(t => t.image)),
-    ]).filter(u => !keepSet.has(u));
-
-    const warmHttp = (url) => fetch(url, { priority: 'low', cache: 'force-cache' })
-      .then(r => (r && r.ok ? r.arrayBuffer() : null))
-      .catch(() => {})
-      .then(() => {});
-
-    const warmTracks = () => {
-      let i = 0;
-      const next = () => { if (i < trackQueue.length) warmHttp(trackQueue[i++]).then(next); };
-      next();
-    };
-
-    if (!keepQueue.length) { warmTracks(); return; }
-    Promise.all(keepQueue.map(u => aoPreloadImage(u))).then(warmTracks);
+    ]).filter(u => !AO_IMAGE_CACHE.has(u));
+    let i = 0;
+    const next = () => { if (i < queue.length) aoPreloadImage(queue[i++]).then(next); };
+    next(); next();
   }
 })();
 
