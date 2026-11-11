@@ -1538,9 +1538,59 @@
      and the variables drive every accent together. Wallpaper plates opt back
      into the same 1s ease. Panel content (track list, titles, lyrics, cover
      chrome and art) swaps instantly — no opacity crossfade of every pane. */
-  body.is-album-morph * {
+  /* Zero only chrome that would chase the accent. Do not zero every
+     descendant — that restages backdrop-filter layers. At F11 / monitor
+     size those rebuilds flash the wallpaper through the glass. */
+  body.is-album-morph .topbar,
+  body.is-album-morph .sidebar,
+  body.is-album-morph .cover-pane,
+  body.is-album-morph .text-pane,
+  body.is-album-morph .mini-player,
+  body.is-album-morph .text-head,
+  body.is-album-morph .text-nav-btn,
+  body.is-album-morph .pane-rail,
+  body.is-album-morph .rail-handle,
+  body.is-album-morph .rail-chev,
+  body.is-album-morph .track-row,
+  body.is-album-morph .cover-row,
+  body.is-album-morph .album-tab,
+  body.is-album-morph .chapter-divider,
+  body.is-album-morph .track-nav-divider,
+  body.is-album-morph .sidebar-foot,
+  body.is-album-morph .topbar-sub,
+  body.is-album-morph .topbar-stamp,
+  body.is-album-morph .cover-eyebrow,
+  body.is-album-morph .cover-meta,
+  body.is-album-morph .cover-title,
+  body.is-album-morph .mp-btn,
+  body.is-album-morph .mp-play,
+  body.is-album-morph .row-play-btn,
+  body.is-album-morph .row-video-btn,
+  body.is-album-morph .fullscreen-btn {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
+  }
+  /* Desktop glass is a large backdrop-filter over the wallpaper. While the
+     new photo is already fading in, drop the filter and sit a static dark
+     fill so a compositor rebuild cannot flash through. Resting glass returns
+     when the morph class comes off. */
+  @media (min-width: 981px) {
+    body.is-album-morph .topbar,
+    body.is-album-morph .sidebar {
+      background: #03060f;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.is-album-morph .text-pane-inner {
+      background: #03060f;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.is-album-morph .mini-player.active {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.is-album-morph .cover-img-wrap::after { opacity: 0; }
   }
   body.is-album-morph .ambient-wallpaper,
   body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img,
@@ -1769,6 +1819,9 @@
   }
   .cover-song-note { font-size: 0.72rem; }
   .track-note { font-size: 0.72rem; }
+  @media (min-width: 981px) {
+    .cover-song-note { font-size: 0.92rem; }
+  }
 
   .lyric-section .sec-lines {
     font-family: 'Rajdhani', sans-serif;
@@ -3690,8 +3743,10 @@ function switchAlbum(num, track, done) {
     state.album = num;
     state.track = track;
     if (albumChanged) {
-      document.body.setAttribute('data-album', String(num));
+      // Arm the morph class first so desktop glass already uses the static
+      // plate (and chrome transitions are zeroed) before the theme snaps.
       if (!prefersReducedMotion()) beginAlbumMorph();
+      document.body.setAttribute('data-album', String(num));
       setAmbientWallpaper(num);
     }
     renderAlbumTabs();
@@ -4341,13 +4396,23 @@ const ambientMistCanvas = document.getElementById('ambientMist');
 const ambientParticlesCanvas = document.getElementById('ambientParticles');
 
 function setupAmbientCanvas(canvas) {
-  const dpr = window.devicePixelRatio || 1;
-  const w = window.innerWidth * 1.12, h = window.innerHeight * 1.12;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
+  // Draw in CSS-pixel space of the 112% plate, but cap the backing store.
+  // A 2560×1440 F11 window at 2× DPR would otherwise be two ~5.7k×3.2k
+  // canvases redrawn every frame — fine in a smaller window, flicker in fullscreen.
+  const cssW = window.innerWidth * 1.12;
+  const cssH = window.innerHeight * 1.12;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const maxEdge = 1600;
+  const fit = Math.min(1, maxEdge / Math.max(cssW, cssH, 1));
+  const bx = Math.max(1, Math.round(cssW * fit * dpr));
+  const by = Math.max(1, Math.round(cssH * fit * dpr));
+  if (canvas.width !== bx || canvas.height !== by) {
+    canvas.width = bx;
+    canvas.height = by;
+  }
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  return { ctx, w, h };
+  ctx.setTransform(bx / cssW, 0, 0, by / cssH, 0, 0);
+  return { ctx, w: cssW, h: cssH };
 }
 
 let ambientMist = setupAmbientCanvas(ambientMistCanvas);
@@ -4788,16 +4853,24 @@ window.addEventListener('mousemove', (e) => {
   ambientMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
 });
 
+let ambientResizeTimer = 0;
 window.addEventListener('resize', () => {
-  ambientMist = setupAmbientCanvas(ambientMistCanvas);
-  ambientParticles = setupAmbientCanvas(ambientParticlesCanvas);
+  clearTimeout(ambientResizeTimer);
+  ambientResizeTimer = setTimeout(() => {
+    ambientMist = setupAmbientCanvas(ambientMistCanvas);
+    ambientParticles = setupAmbientCanvas(ambientParticlesCanvas);
+  }, 120);
 });
 
 function ambientLoop() {
   ambientT += 0.02;
   updateAmbientEnergy();
-  drawAmbientMist();
-  drawAmbientParticles();
+  // Skip the two full-viewport canvases during an album switch so the
+  // wallpaper crossfade and glass layers are not competing for the GPU.
+  if (!document.body.classList.contains('is-album-morph')) {
+    drawAmbientMist();
+    drawAmbientParticles();
+  }
   applyAmbientParallax();
   // Reduced motion: draw a single static frame instead of animating; hidden tab: stop.
   ambientRaf = (FX_REDUCE.matches || document.hidden) ? null : requestAnimationFrame(ambientLoop);
