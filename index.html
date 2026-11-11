@@ -4838,10 +4838,11 @@ function setAmbientWallpaper(albumNum) {
 // ── PRELOADER ──
 // Decode initial artwork for first paint and load other artwork on demand.
 const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (kept alive so the browser keeps it hot)
-function aoPreloadImage(url) {
+function aoPreloadImage(url, priority = 'auto') {
   if (AO_IMAGE_CACHE.has(url)) return AO_IMAGE_CACHE.get(url).promise;
   const img = new Image();
   img.decoding = 'async';
+  img.fetchPriority = priority;
   const promise = new Promise(resolve => {
     img.onload = () => {
       // decode() guarantees the bitmap is ready, so it paints instantly when the UI uses it
@@ -4865,15 +4866,7 @@ function aoPreloadImage(url) {
   const SKIP_AFTER_MS    = 10000; // offer a manual "enter" button on slow connections
 
   const startAlbum = state.album;
-  const uniq = arr => [...new Set(arr.filter(Boolean))];
-
-  // Tier 1 — on screen at first paint: every album cover (album tabs show them as backgrounds,
-  // and the current one fills the artwork pane) + the current album's wallpaper.
-  const critical = uniq([
-    ALBUMS[startAlbum] && ALBUMS[startAlbum].cover,
-    ambientThemes[startAlbum] && ambientThemes[startAlbum].image,
-    ...Object.values(ALBUMS).map(a => a.cover),
-  ]);
+  const critical = [ALBUMS[startAlbum].cover, ambientThemes[startAlbum].image];
 
   let done = 0, finished = false, lastProgressAt = performance.now();
   function setProgress() {
@@ -4893,12 +4886,12 @@ function aoPreloadImage(url) {
     setTimeout(() => loadingScreen.remove(), 700);
   }
 
-  const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve();
-  Promise.all([
-    ...critical.map(url => aoPreloadImage(url).then(() => { done++; lastProgressAt = performance.now(); setProgress(); })),
-    Promise.race([fontsReady, new Promise(r => setTimeout(r, 4000))]),
-  ]).then(() => {
-    // one frame so the decoded art is actually composited before the overlay fades
+  Promise.all(critical.map(url => aoPreloadImage(url, 'high').then(() => {
+    done++;
+    lastProgressAt = performance.now();
+    setProgress();
+  }))).then(() => {
+    // Give the decoded art a frame to paint before revealing the site.
     requestAnimationFrame(() => requestAnimationFrame(() => finishLoading('complete')));
   });
 
