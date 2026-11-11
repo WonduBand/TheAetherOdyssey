@@ -14,7 +14,7 @@
     --bg: #03060f; --bg-panel: #070d1a; --bg-raise: #0a1220;
     --border: #2a4a6a; --border-dim: #0d3b6e;
     --text-dim: #5a7fa8;
-    /* One clock for every album switch: theme, wallpaper, cover, track list, lyrics. */
+    /* Shared timing for artwork and track reveal effects. */
     --album-morph: 1s;
     --album-ease: cubic-bezier(.42, 0, .2, 1);
   }
@@ -56,14 +56,12 @@
 
   /* ── AMBIENT WALLPAPER (per-album background + parallax) ──
      Mobile keeps this stack as-is (panels cover it). Desktop presentation —
-     scale, grade, shafts, depth — lives in the min-width: 981px block below
+     scale, grade and shafts — lives in the min-width: 981px block below
      the FX pack, and the ken-burns drift is desktop-only in applyAmbientParallax. */
   .ambient-wallpaper {
     position: fixed; inset: 0; z-index: 0;
     opacity: 0; pointer-events: none;
-    transition: opacity var(--album-morph) var(--album-ease),
-      --wash-x var(--album-morph) var(--album-ease),
-      --wash-y var(--album-morph) var(--album-ease);
+    transition: opacity var(--album-morph) var(--album-ease);
     --beat: 0; --wash-x: 70%; --wash-y: 28%;
   }
   .ambient-wallpaper.active { opacity: 1; }
@@ -71,14 +69,6 @@
     position: absolute; top: -6%; left: -6%; width: 112%; height: 112%;
     background-size: cover; background-position: center;
     will-change: transform;
-  }
-  .ambient-img-dof {
-    position: absolute; top: -6%; left: -6%; width: 112%; height: 112%;
-    background-size: cover; background-position: center;
-    filter: blur(16px);
-    transform: scale(1.06);
-    -webkit-mask-image: radial-gradient(ellipse 62% 58% at center, transparent 45%, black 100%);
-    mask-image: radial-gradient(ellipse 62% 58% at center, transparent 45%, black 100%);
   }
   .ambient-bloom {
     position: absolute; inset: 0; pointer-events: none;
@@ -1405,13 +1395,6 @@
       background-position: center 40%;
       filter: saturate(1.14) contrast(1.05) brightness(0.96);
     }
-    .ambient-img-dof {
-      top: -18%; left: -18%; width: 136%; height: 136%;
-      filter: blur(34px) saturate(1.5) brightness(0.66);
-      opacity: 0.92;
-      -webkit-mask-image: radial-gradient(ellipse 80% 74% at 50% 46%, transparent 18%, black 70%);
-      mask-image: radial-gradient(ellipse 80% 74% at 50% 46%, transparent 18%, black 70%);
-    }
     .ambient-shafts {
       display: block; position: absolute; inset: -18%; pointer-events: none;
       mix-blend-mode: screen;
@@ -1531,49 +1514,11 @@
     }
   }
 
-  /* ── One album-switch clock ──
-     Theme colours are the registered custom properties on body. A second
-     colour/background/border transition on descendants would chase that morph
-     and land late, so while .is-album-morph is set those durations drop to 0
-     and the variables drive every accent together. Wallpaper plates opt back
-     into the same 1s ease. Panel content (track list, titles, lyrics, cover
-     chrome and art) swaps instantly — no opacity crossfade of every pane. */
+  /* Apply album colors and content together in one style update. */
   body.is-album-morph * {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
   }
-  body.is-album-morph .ambient-wallpaper,
-  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img,
-  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img-dof,
-  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-bloom,
-  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-glow-slot,
-  body.is-album-morph .ambient-in {
-    transition-duration: var(--album-morph) !important;
-    transition-delay: 0s !important;
-  }
-  .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in),
-  .ambient-wallpaper.is-fading > .ambient-img-dof:not(.ambient-in),
-  .ambient-wallpaper.is-fading > .ambient-bloom:not(.ambient-in),
-  .ambient-wallpaper.is-fading > .ambient-glow-slot:not(.ambient-in) {
-    opacity: 0;
-    transition: opacity var(--album-morph) var(--album-ease);
-  }
-  .ambient-in {
-    opacity: 0;
-    transition: opacity var(--album-morph) var(--album-ease);
-    pointer-events: none;
-  }
-  .ambient-img.ambient-in.on { opacity: 1; }
-  .ambient-img-dof.ambient-in.on { opacity: 0.92; }
-  /* Desktop: skip the incoming 136% blur(34px) DOF plate during the album
-     crossfade so it is not shown or rasterized. The new album's DOF is
-     planted on the settled plate at fade start, already in place at the end. */
-  @media (min-width: 981px) {
-    .ambient-wallpaper.is-fading > .ambient-img-dof.ambient-in { display: none; }
-    .ambient-wallpaper.is-fading > .ambient-img-dof:not(.ambient-in) { opacity: 0.92; }
-  }
-  .ambient-bloom.ambient-in.on,
-  .ambient-glow-slot.ambient-in.on { opacity: 1; }
   .cover-img-wrap.is-cover-fading > .cover-img:not(.cover-img-morph),
   .cover-img-wrap.is-cover-fading > .cover-backdrop:not(.cover-backdrop-morph) {
     opacity: 0;
@@ -1597,32 +1542,23 @@
   .cover-backdrop-morph { z-index: 0; }
   .cover-backdrop-morph.on { opacity: 1; }
 
-  /* Fullscreen crossfades the wallpaper with opacity. Keep panel surfaces
-     independent of the changing backdrop and apply the album colors once. */
-  html:is(:fullscreen, .browser-fullscreen) body {
-    transition: none;
-  }
-  html:is(:fullscreen, .browser-fullscreen) body.is-album-morph .ambient-wallpaper {
-    transition-property: opacity;
-  }
-  html:is(:fullscreen, .browser-fullscreen) .ambient-img-dof {
-    display: none;
-  }
-  html:is(:fullscreen, .browser-fullscreen) .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in) {
-    opacity: 1;
-  }
-  html:is(:fullscreen, .browser-fullscreen) body[data-album] :is(.topbar, .sidebar),
-  html:is(:fullscreen, .browser-fullscreen) .text-pane-inner,
-  html:is(:fullscreen, .browser-fullscreen) .mini-player.active {
+  /* Keep album changes on a single wallpaper surface. A live backdrop
+     filter would still sample the changing wallpaper behind each panel. */
+  body[data-album] :is(.topbar, .sidebar),
+  .text-pane-inner,
+  .mini-player.active {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  html:is(:fullscreen, .browser-fullscreen) body[data-album] :is(.topbar, .sidebar),
-  html:is(:fullscreen, .browser-fullscreen) .mini-player.active {
+  body[data-album] :is(.topbar, .sidebar),
+  .mini-player.active {
     background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
   }
-  html:is(:fullscreen, .browser-fullscreen) .text-pane-inner {
+  .text-pane-inner {
     background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+  body.is-album-morph {
+    transition: none;
   }
 
   /* ── Reduced motion: keep the look, drop the movement ── */
@@ -1637,11 +1573,6 @@
     body::after, .mini-player::after, .fx-flash, .fx-spot { display: none !important; }
     .loading-log div { opacity: 1; clip-path: none; }
     .cover-img-morph { animation: none !important; }
-    .ambient-in,
-    .ambient-wallpaper.is-fading > .ambient-img,
-    .ambient-wallpaper.is-fading > .ambient-img-dof,
-    .ambient-wallpaper.is-fading > .ambient-bloom,
-    .ambient-wallpaper.is-fading > .ambient-glow-slot,
     .cover-img-morph,
     .cover-backdrop-morph,
     .cover-img-wrap.is-cover-fading > .cover-img,
@@ -1899,13 +1830,8 @@
 
 <div class="ambient-wallpaper" id="ambientWallpaper">
   <div class="ambient-img" id="ambientImg"></div>
-  <div class="ambient-img ambient-in" id="ambientImgIn"></div>
-  <div class="ambient-img-dof" id="ambientImgDof"></div>
-  <div class="ambient-img-dof ambient-in" id="ambientImgDofIn"></div>
   <div class="ambient-bloom" id="ambientBloom"></div>
-  <div class="ambient-bloom ambient-in" id="ambientBloomIn"></div>
   <div class="ambient-glow-slot" id="ambientGlowSlot"><div class="ambient-glow" id="ambientGlow"></div></div>
-  <div class="ambient-glow-slot ambient-in" id="ambientGlowInWrap"><div class="ambient-glow" id="ambientGlowIn"></div></div>
   <div class="ambient-aurora" id="ambientAurora"></div>
   <div class="ambient-shafts" id="ambientShafts" aria-hidden="true"></div>
   <canvas class="ambient-mist" id="ambientMist"></canvas>
@@ -3480,8 +3406,7 @@ function renderCover() {
   // even before we know whether the real file exists.
   fallback.innerHTML = meta.svgFallback + `<div class="placeholder-caption">Drop in ${srcToUse} to replace this artwork</div>`;
 
-  // Album switch: swap the preloaded plate immediately. Wallpaper and theme
-  // still crossfade; fading the artwork too made the whole stage flicker.
+  // Swap the preloaded cover in the same update as the album wallpaper.
   if (document.body.classList.contains('is-album-morph') && srcToUse) {
     img.src = srcToUse;
     img.style.display = 'block';
@@ -3653,7 +3578,7 @@ function renderText() {
 
 // ── SELECTION ──
 // Album changes wait until the new wallpaper and cover are decoded, then the
-// theme and wallpaper crossfade on one 1s ease. Panel content swaps instantly.
+// wallpaper, theme, cover and panel content update together.
 let albumSwitchToken = 0;
 let albumMorphTimer = 0;
 let trackRevealTimer = 0;
@@ -3670,11 +3595,10 @@ function prefersReducedMotion() {
 }
 
 function finishAlbumMorph() {
-  clearTimeout(albumMorphTimer);
+  cancelAnimationFrame(albumMorphTimer);
   albumMorphTimer = 0;
   document.body.classList.remove('is-album-morph');
   commitContentMorph();
-  commitAmbientPlates();
   commitCoverMorph();
 }
 
@@ -3713,9 +3637,11 @@ function beginAlbumMorph() {
   document.body.classList.remove('is-track-reveal');
   clearTimeout(trackRevealTimer);
   finishAlbumMorph();
-  void document.body.offsetWidth;
   document.body.classList.add('is-album-morph');
-  albumMorphTimer = setTimeout(finishAlbumMorph, albumMorphMs() + 60);
+  albumMorphTimer = requestAnimationFrame(() => {
+    void document.body.offsetWidth;
+    finishAlbumMorph();
+  });
 }
 
 function switchAlbum(num, track, done) {
@@ -3728,8 +3654,8 @@ function switchAlbum(num, track, done) {
     state.album = num;
     state.track = track;
     if (albumChanged) {
+      beginAlbumMorph();
       document.body.setAttribute('data-album', String(num));
-      if (!prefersReducedMotion()) beginAlbumMorph();
       setAmbientWallpaper(num);
     }
     renderAlbumTabs();
@@ -4348,22 +4274,6 @@ window.addEventListener('keydown', (e) => {
 }, true);
 
 // ── FULLSCREEN TOGGLE ──
-const fullscreenDisplay = window.matchMedia('(display-mode: fullscreen)');
-
-function syncBrowserFullscreen() {
-  // Browser chrome fullscreen (for example F11) may leave fullscreenElement null.
-  // Allow one CSS pixel for fractional display scaling.
-  const fillsScreen = Math.abs(window.innerWidth - window.screen.width) <= 1 &&
-    Math.abs(window.innerHeight - window.screen.height) <= 1;
-  document.documentElement.classList.toggle('browser-fullscreen',
-    !document.fullscreenElement && (fullscreenDisplay.matches || fillsScreen));
-}
-
-window.addEventListener('resize', syncBrowserFullscreen);
-fullscreenDisplay.addEventListener('change', syncBrowserFullscreen);
-document.addEventListener('fullscreenchange', syncBrowserFullscreen);
-syncBrowserFullscreen();
-
 const fsBtn = document.getElementById('fullscreenBtn');
 fsBtn.addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -4380,17 +4290,8 @@ document.addEventListener('fullscreenchange', () => {
 // ── AMBIENT WALLPAPER (Elysium / Album 3 for now) ──
 const ambientWallpaper = document.getElementById('ambientWallpaper');
 const ambientImg = document.getElementById('ambientImg');
-const ambientImgIn = document.getElementById('ambientImgIn');
-const ambientImgDof = document.getElementById('ambientImgDof');
-const ambientImgDofIn = document.getElementById('ambientImgDofIn');
 const ambientBloom = document.getElementById('ambientBloom');
-const ambientBloomIn = document.getElementById('ambientBloomIn');
 const ambientGlow = document.getElementById('ambientGlow');
-const ambientGlowIn = document.getElementById('ambientGlowIn');
-const ambientGlowSlot = document.getElementById('ambientGlowSlot');
-const ambientGlowInWrap = document.getElementById('ambientGlowInWrap');
-let ambientIncomingUrl = '';
-let ambientIncomingTheme = null;
 const ambientMistCanvas = document.getElementById('ambientMist');
 const ambientParticlesCanvas = document.getElementById('ambientParticles');
 
@@ -4808,9 +4709,6 @@ function applyAmbientParallax() {
     const cosmicDrift = ambientCurrentAlbum === 4 ? Math.sin(ambientT * 0.004) * 3 : 0;
     const mobilePlate = `translate(${ambientMouseX * 8 + cosmicDrift}px, ${ambientMouseY * 6}px) scale(${(1.02 + kenBurnsScale - 1).toFixed(4)})`;
     ambientImg.style.transform = mobilePlate;
-    ambientImgIn.style.transform = mobilePlate;
-    ambientImgDof.style.transform = '';
-    ambientImgDofIn.style.transform = '';
     ambientMistCanvas.style.transform = `translate(${ambientMouseX * 16}px, ${ambientMouseY * 12}px)`;
     ambientParticlesCanvas.style.transform = `translate(${ambientMouseX * 28}px, ${ambientMouseY * 20}px)`;
     return;
@@ -4824,12 +4722,7 @@ function applyAmbientParallax() {
   const px = reduce ? 0 : ambientMouseX * 20;
   const py = reduce ? 0 : ambientMouseY * 12;
   const plate = `translate(${(driftX + px).toFixed(2)}px, ${(driftY + py).toFixed(2)}px) scale(${scale.toFixed(4)})`;
-  const far = `translate(${(-driftX * 0.4 - px * 0.55).toFixed(2)}px, ${(-driftY * 0.4 - py * 0.55).toFixed(2)}px) scale(${(scale + 0.1).toFixed(4)})`;
   ambientImg.style.transform = plate;
-  ambientImgIn.style.transform = plate;
-  // Far plate travels the other way and stays larger — the blur layer reads as depth, not a copy.
-  ambientImgDof.style.transform = far;
-  ambientImgDofIn.style.transform = far;
   const mx = reduce ? 0 : ambientMouseX;
   const my = reduce ? 0 : ambientMouseY;
   ambientMistCanvas.style.transform = `translate(${(mx * 30 + driftX * 0.35).toFixed(2)}px, ${(my * 18 + driftY * 0.35).toFixed(2)}px)`;
@@ -4862,26 +4755,6 @@ function paintAmbientWash(bloomEl, glowEl, theme) {
   glowEl.style.background = `radial-gradient(circle at ${theme.bloomPos}, rgba(${theme.glowColor},0.4), transparent 45%)`;
 }
 
-function commitAmbientPlates() {
-  if (!ambientWallpaper.classList.contains('is-fading')) return;
-  const plates = [ambientImg, ambientImgIn, ambientImgDof, ambientImgDofIn, ambientBloom, ambientBloomIn, ambientGlowSlot, ambientGlowInWrap];
-  plates.forEach(el => { if (el) el.style.setProperty('transition', 'none', 'important'); });
-  if (ambientIncomingUrl) {
-    ambientImg.style.backgroundImage = ambientIncomingUrl;
-    ambientImgDof.style.backgroundImage = ambientIncomingUrl;
-  }
-  if (ambientIncomingTheme) paintAmbientWash(ambientBloom, ambientGlow, ambientIncomingTheme);
-  ambientImgIn.classList.remove('on');
-  ambientImgDofIn.classList.remove('on');
-  ambientBloomIn.classList.remove('on');
-  ambientGlowInWrap.classList.remove('on');
-  ambientWallpaper.classList.remove('is-fading');
-  void ambientWallpaper.offsetWidth;
-  plates.forEach(el => { if (el) el.style.removeProperty('transition'); });
-  ambientIncomingUrl = '';
-  ambientIncomingTheme = null;
-}
-
 function setAmbientWallpaper(albumNum) {
   const theme = ambientThemes[albumNum];
   if (!theme) return;
@@ -4891,38 +4764,15 @@ function setAmbientWallpaper(albumNum) {
   ambientWallpaper.style.setProperty('--wash-y', wash[1] || '30%');
   const url = `url('${theme.image}')`;
   const first = !ambientActive;
-  // First paint and reduced motion swap in place. An album change crossfades a
-  // second plate so the photo starts with the theme instead of popping in after.
-  if (first || FX_REDUCE.matches || prefersReducedMotion()) {
-    commitAmbientPlates();
-    ambientImg.style.backgroundImage = url;
-    ambientImgDof.style.backgroundImage = url;
-    paintAmbientWash(ambientBloom, ambientGlow, theme);
-    if (first) {
-      ambientActive = true;
-      ambientWallpaper.classList.add('active');
-      if (!ambientRaf) ambientLoop();
-    } else if (FX_REDUCE.matches || prefersReducedMotion()) {
-      ambientLoop();
-    }
-    return;
+  ambientImg.style.backgroundImage = url;
+  paintAmbientWash(ambientBloom, ambientGlow, theme);
+  if (first) {
+    ambientActive = true;
+    ambientWallpaper.classList.add('active');
+    if (!ambientRaf) ambientLoop();
+  } else if (FX_REDUCE.matches || prefersReducedMotion()) {
+    ambientLoop();
   }
-  ambientIncomingUrl = url;
-  ambientIncomingTheme = theme;
-  ambientImgIn.style.backgroundImage = url;
-  paintAmbientWash(ambientBloomIn, ambientGlowIn, theme);
-  const desktopStage = window.matchMedia('(min-width: 981px)').matches;
-  if (desktopStage) {
-    ambientImgDof.style.backgroundImage = url;
-  } else {
-    ambientImgDofIn.style.backgroundImage = url;
-  }
-  ambientWallpaper.classList.add('is-fading');
-  void ambientImgIn.offsetWidth;
-  ambientImgIn.classList.add('on');
-  if (!desktopStage) ambientImgDofIn.classList.add('on');
-  ambientBloomIn.classList.add('on');
-  ambientGlowInWrap.classList.add('on');
 }
 
 // ── PRELOADER ──
