@@ -14,7 +14,7 @@
     --bg: #03060f; --bg-panel: #070d1a; --bg-raise: #0a1220;
     --border: #2a4a6a; --border-dim: #0d3b6e;
     --text-dim: #5a7fa8;
-    /* Album-switch clock: accents and wallpaper still ease. Panel fills snap. */
+    /* One clock for every album switch: theme, wallpaper, cover, track list, lyrics. */
     --album-morph: 1s;
     --album-ease: cubic-bezier(.42, 0, .2, 1);
   }
@@ -27,7 +27,9 @@
     color: #ccc;
   }
 
-  /* Background follows snapped --bg; accent easing is declared in the FX pack. */
+  body {
+    transition: background var(--album-morph) var(--album-ease);
+  }
 
   body::before {
     content: '';
@@ -96,7 +98,7 @@
     position: absolute; top: -6%; left: -6%; width: 112%; height: 112%;
   }
 
-  /* Panel tint uses --bg-panel, which snaps on album switch (no fill interpolation). */
+  /* Panel tint follows --bg-panel so it rides the same morph as the accent, not a discrete pop. */
   body[data-album] .topbar, body[data-album] .sidebar {
     background: color-mix(in srgb, var(--bg-panel) 55%, transparent);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
@@ -106,7 +108,7 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.7rem 1.4rem; border-bottom: 1px solid var(--border);
     background: var(--bg-panel);
-    transition: border-color 0.28s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
     z-index: 10; position: relative;
   }
   .topbar-brand { display: flex; align-items: baseline; gap: 0.8rem; }
@@ -178,7 +180,7 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     min-height: 0;
-    transition: border-color 0.28s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
   }
 
   .album-tabs {
@@ -355,7 +357,7 @@
     display: none; align-items: center; gap: 1rem;
     padding: 0.55rem 1.4rem;
     background: var(--bg-panel); border-top: 1px solid var(--border);
-    transition: border-color 0.28s ease;
+    transition: border-color 0.28s ease, background 0.28s ease;
   }
   .mini-player.active { display: flex; animation: miniPlayerIn 0.4s cubic-bezier(.4,0,.2,1); }
   @keyframes miniPlayerIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -555,13 +557,13 @@
   }
   .text-pane-inner {
     display: flex; flex-direction: column; min-height: 0; flex: 1;
-    background: var(--bg); transition: transform 0.45s ease, opacity 0.4s ease;
+    background: var(--bg); transition: background 0.28s ease, transform 0.45s ease, opacity 0.4s ease;
   }
 
   .cover-pane-inner {
     display: flex; flex-direction: column; width: 100%;
     background: #000;
-    transition: transform 0.45s ease, opacity 0.4s ease;
+    transition: transform 0.45s ease, opacity 0.4s ease, background 0.28s ease;
   }
   @media (min-width: 981px) {
     .cover-pane-inner { height: 100%; }
@@ -607,7 +609,7 @@
       width: unset; min-width: unset; flex: 1;
     }
     .cover-pane-inner, .text-pane-inner {
-      transition: transform 0.45s var(--pane-ease), opacity 0.35s ease, filter 0.45s ease;
+      transition: transform 0.45s var(--pane-ease), opacity 0.35s ease, filter 0.45s ease, background 0.28s ease;
     }
     .cover-pane-inner.collapsed { transform: translateX(-4%) scale(0.985); opacity: 0; filter: blur(3px); pointer-events: none; }
     .text-pane-inner.collapsed  { transform: translateX(4%) scale(0.985);  opacity: 0; filter: blur(3px); pointer-events: none; }
@@ -1150,14 +1152,11 @@
   @property --text-dim    { syntax: '<color>'; inherits: true; initial-value: #5a7fa8; }
   @property --wash-x { syntax: '<percentage>'; inherits: true; initial-value: 70%; }
   @property --wash-y { syntax: '<percentage>'; inherits: true; initial-value: 28%; }
-  /* Fills and borders snap with data-album. Only accents (and muted text) ease,
-     so glass color-mix tints cannot interpolate or flash the new accent. */
   body {
-    transition:
-      --accent var(--album-morph) var(--album-ease),
-      --accent-deep var(--album-morph) var(--album-ease),
-      --accent-pale var(--album-morph) var(--album-ease),
-      --text-dim var(--album-morph) var(--album-ease);
+    transition: background var(--album-morph) var(--album-ease),
+      --accent var(--album-morph) var(--album-ease), --accent-deep var(--album-morph) var(--album-ease), --accent-pale var(--album-morph) var(--album-ease),
+      --bg var(--album-morph) var(--album-ease), --bg-panel var(--album-morph) var(--album-ease), --bg-raise var(--album-morph) var(--album-ease),
+      --border var(--album-morph) var(--album-ease), --border-dim var(--album-morph) var(--album-ease), --text-dim var(--album-morph) var(--album-ease);
   }
 
   /* ── Ambient: accent aurora wash (gradients only, transform-animated) ── */
@@ -1324,7 +1323,7 @@
   @media (min-width: 981px) {
     .app-main { --pane-ease: cubic-bezier(.22,1,.36,1); transition: grid-template-columns 0.42s var(--pane-ease); }
     .cover-pane-inner:not(.collapsed), .text-pane-inner:not(.collapsed) {
-      transition: transform 0.55s cubic-bezier(.34,1.5,.64,1), opacity 0.35s ease 0.06s, filter 0.4s ease;
+      transition: transform 0.55s cubic-bezier(.34,1.5,.64,1), opacity 0.35s ease 0.06s, filter 0.4s ease, background 0.28s ease;
     }
     .cover-pane-inner { position: relative; }
     /* HUD corner brackets */
@@ -1474,24 +1473,6 @@
       -webkit-backdrop-filter: blur(16px) saturate(1.2);
       backdrop-filter: blur(16px) saturate(1.2);
     }
-    /* During an album switch the new wallpaper is already visible. If the
-       glass fill or backdrop-filter layer is rebuilt, that saturated wallpaper
-       would flash through the pane as a solid accent plate. While the morph
-       class is on, sit a static dark plate (no custom-property interpolation,
-       no backdrop-filter) under the same rounded frame. Resting glass returns
-       as soon as the class comes off. */
-    body.is-album-morph .topbar,
-    body.is-album-morph .sidebar {
-      background: #03060f;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
-    body.is-album-morph .text-pane-inner {
-      background: #03060f;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
-    body.is-album-morph .cover-img-wrap::after { opacity: 0; }
     .text-head {
       background: color-mix(in srgb, var(--bg) 42%, transparent);
     }
@@ -1551,38 +1532,23 @@
   }
 
   /* ── One album-switch clock ──
-     Panel fills and borders already snap. Zero only the chrome transitions
-     that would still chase the easing accent (color, border, glow). Do not
-     zero every descendant — that restages backdrop-filter layers and can
-     flash the wallpaper through the glass. Wallpaper plates keep their own
-     1s opacity ease, declared below. Panel content swaps instantly. */
-  body.is-album-morph .topbar,
-  body.is-album-morph .sidebar,
-  body.is-album-morph .cover-pane,
-  body.is-album-morph .text-pane,
-  body.is-album-morph .mini-player,
-  body.is-album-morph .text-head,
-  body.is-album-morph .text-nav-btn,
-  body.is-album-morph .pane-rail,
-  body.is-album-morph .rail-handle,
-  body.is-album-morph .rail-chev,
-  body.is-album-morph .track-row,
-  body.is-album-morph .cover-row,
-  body.is-album-morph .album-tab,
-  body.is-album-morph .chapter-divider,
-  body.is-album-morph .track-nav-divider,
-  body.is-album-morph .sidebar-foot,
-  body.is-album-morph .topbar-sub,
-  body.is-album-morph .topbar-stamp,
-  body.is-album-morph .cover-eyebrow,
-  body.is-album-morph .cover-meta,
-  body.is-album-morph .cover-title,
-  body.is-album-morph .mp-btn,
-  body.is-album-morph .mp-play,
-  body.is-album-morph .row-play-btn,
-  body.is-album-morph .row-video-btn,
-  body.is-album-morph .fullscreen-btn {
+     Theme colours are the registered custom properties on body. A second
+     colour/background/border transition on descendants would chase that morph
+     and land late, so while .is-album-morph is set those durations drop to 0
+     and the variables drive every accent together. Wallpaper plates opt back
+     into the same 1s ease. Panel content (track list, titles, lyrics, cover
+     chrome and art) swaps instantly — no opacity crossfade of every pane. */
+  body.is-album-morph * {
     transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+  body.is-album-morph .ambient-wallpaper,
+  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img,
+  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img-dof,
+  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-bloom,
+  body.is-album-morph .ambient-wallpaper.is-fading > .ambient-glow-slot,
+  body.is-album-morph .ambient-in {
+    transition-duration: var(--album-morph) !important;
     transition-delay: 0s !important;
   }
   .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in),
@@ -3724,10 +3690,8 @@ function switchAlbum(num, track, done) {
     state.album = num;
     state.track = track;
     if (albumChanged) {
-      // Arm the morph class first so glass fills use the static dark plate
-      // and chrome transitions are already zeroed before the theme snaps.
-      if (!prefersReducedMotion()) beginAlbumMorph();
       document.body.setAttribute('data-album', String(num));
+      if (!prefersReducedMotion()) beginAlbumMorph();
       setAmbientWallpaper(num);
     }
     renderAlbumTabs();
