@@ -1565,6 +1565,13 @@
   }
   .ambient-img.ambient-in.on { opacity: 1; }
   .ambient-img-dof.ambient-in.on { opacity: 0.92; }
+  /* Desktop: skip the incoming 136% blur(34px) DOF plate during the album
+     crossfade so it is not shown or rasterized. The new album's DOF is
+     planted on the settled plate at fade start, already in place at the end. */
+  @media (min-width: 981px) {
+    .ambient-wallpaper.is-fading > .ambient-img-dof.ambient-in { display: none; }
+    .ambient-wallpaper.is-fading > .ambient-img-dof:not(.ambient-in) { opacity: 0.92; }
+  }
   .ambient-bloom.ambient-in.on,
   .ambient-glow-slot.ambient-in.on { opacity: 1; }
   .cover-img-wrap.is-cover-fading > .cover-img:not(.cover-img-morph),
@@ -4859,12 +4866,17 @@ function setAmbientWallpaper(albumNum) {
   ambientIncomingUrl = url;
   ambientIncomingTheme = theme;
   ambientImgIn.style.backgroundImage = url;
-  ambientImgDofIn.style.backgroundImage = url;
   paintAmbientWash(ambientBloomIn, ambientGlowIn, theme);
+  const desktopStage = window.matchMedia('(min-width: 981px)').matches;
+  if (desktopStage) {
+    ambientImgDof.style.backgroundImage = url;
+  } else {
+    ambientImgDofIn.style.backgroundImage = url;
+  }
   ambientWallpaper.classList.add('is-fading');
   void ambientImgIn.offsetWidth;
   ambientImgIn.classList.add('on');
-  ambientImgDofIn.classList.add('on');
+  if (!desktopStage) ambientImgDofIn.classList.add('on');
   ambientBloomIn.classList.add('on');
   ambientGlowInWrap.classList.add('on');
 }
