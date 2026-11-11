@@ -3375,9 +3375,20 @@ function renderTrackNav() {
       e.stopPropagation();
       openVideoModal(t.youtube, t.title, vBtn);
     });
-    row.querySelector('.row-play-btn').addEventListener('click', (e) => {
+    const playButton = row.querySelector('.row-play-btn');
+    const album = state.album;
+    let preloadTimer;
+    row.addEventListener('pointerenter', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      preloadTimer = setTimeout(() => {
+        if (row.isConnected) preloadTrack(album, i);
+      }, 120);
+    });
+    row.addEventListener('pointerleave', () => clearTimeout(preloadTimer));
+    playButton.addEventListener('focus', () => preloadTrack(album, i));
+    playButton.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleOrPlay(state.album, i);
+      toggleOrPlay(album, i);
     });
     el.appendChild(row);
   });
@@ -3719,6 +3730,7 @@ function selectAlbum(num) {
 function selectTrack(i) {
   const meta = ALBUMS[state.album];
   if (i < -1 || i >= meta.tracks.length) return;
+  if (i >= 0) preloadTrack(state.album, i);
   state.track = i;
   renderTrackNav();
   renderCover();
@@ -3792,6 +3804,15 @@ function ensureAudioAnalyser() {
 function trackFileName(albumNum, idx) {
   const t = ALBUMS[albumNum].tracks[idx];
   return `Album ${albumNum}/${String(idx+1).padStart(2,'0')} - ${t.title}.mp3`;
+}
+
+function preloadTrack(albumNum, idx) {
+  // Only use the idle player. Browsing must never replace a playing or paused song.
+  if (playingAlbum !== null || navigator.connection?.saveData) return;
+  const src = AUDIO_PATH + trackFileName(albumNum, idx);
+  if (audioPlayer.getAttribute('src') === src) return;
+  audioPlayer.preload = 'auto';
+  audioPlayer.src = src;
 }
 
 function isRowPlaying(albumNum, idx) {
@@ -4815,15 +4836,12 @@ function setAmbientWallpaper(albumNum) {
 }
 
 // ── PRELOADER ──
-// Holds the loading screen until the artwork visible on first paint is downloaded AND decoded,
-// then warms everything else in the background in priority order (one tier at a time so the
-// big wallpapers never steal bandwidth from what's on screen).
+// Decode initial artwork for first paint and load other artwork on demand.
 const AO_IMAGE_CACHE = new Map(); // url -> decoded HTMLImageElement (kept alive so the browser keeps it hot)
-function aoPreloadImage(url, priority) {
+function aoPreloadImage(url) {
   if (AO_IMAGE_CACHE.has(url)) return AO_IMAGE_CACHE.get(url).promise;
   const img = new Image();
   img.decoding = 'async';
-  if (priority) img.fetchPriority = priority;
   const promise = new Promise(resolve => {
     img.onload = () => {
       // decode() guarantees the bitmap is ready, so it paints instantly when the UI uses it
@@ -4834,12 +4852,6 @@ function aoPreloadImage(url, priority) {
   img.src = url;
   AO_IMAGE_CACHE.set(url, { img, promise });
   return promise;
-}
-
-// Warm the initial track on the player itself without starting playback.
-if (!navigator.connection?.saveData) {
-  audioPlayer.preload = 'auto';
-  audioPlayer.src = AUDIO_PATH + trackFileName(state.album, 0);
 }
 
 (function () {
@@ -4879,7 +4891,6 @@ if (!navigator.connection?.saveData) {
     if (reason !== 'complete') console.warn('Loader dismissed early (' + reason + '); ' + done + '/' + critical.length + ' critical assets ready.');
     loadingScreen.classList.add('hidden');
     setTimeout(() => loadingScreen.remove(), 700);
-    backgroundPreload();
   }
 
   const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve();
@@ -4900,18 +4911,6 @@ if (!navigator.connection?.saveData) {
   const skipTimer = setTimeout(() => { if (loadingSkip) loadingSkip.hidden = false; }, SKIP_AFTER_MS);
   if (loadingSkip) loadingSkip.addEventListener('click', () => finishLoading('skipped'));
 
-  // Tier 2+ — after the app is visible: remaining wallpapers (needed on album switch),
-  // then track art for the current album first, then the rest. Two downloads at a time.
-  function backgroundPreload() {
-    const queue = uniq([
-      ...Object.keys(ambientThemes).map(k => ambientThemes[k].image),
-      ...ALBUMS[state.album].tracks.map(t => t.image),
-      ...Object.values(ALBUMS).flatMap(a => a.tracks.map(t => t.image)),
-    ]).filter(u => !AO_IMAGE_CACHE.has(u));
-    let i = 0;
-    const next = () => { if (i < queue.length) aoPreloadImage(queue[i++], 'low').then(next); };
-    next(); next();
-  }
 })();
 
 // ── INIT ──
