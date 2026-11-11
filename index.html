@@ -1597,6 +1597,34 @@
   .cover-backdrop-morph { z-index: 0; }
   .cover-backdrop-morph.on { opacity: 1; }
 
+  /* Fullscreen crossfades the wallpaper with opacity. Keep panel surfaces
+     independent of the changing backdrop and apply the album colors once. */
+  html:fullscreen body {
+    transition: none;
+  }
+  html:fullscreen body.is-album-morph .ambient-wallpaper {
+    transition-property: opacity;
+  }
+  html:fullscreen .ambient-img-dof {
+    display: none;
+  }
+  html:fullscreen .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in) {
+    opacity: 1;
+  }
+  html:fullscreen body[data-album] :is(.topbar, .sidebar),
+  html:fullscreen .text-pane-inner,
+  html:fullscreen .mini-player.active {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  html:fullscreen body[data-album] :is(.topbar, .sidebar),
+  html:fullscreen .mini-player.active {
+    background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
+  }
+  html:fullscreen .text-pane-inner {
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+  }
+
   /* ── Reduced motion: keep the look, drop the movement ── */
   @media (prefers-reduced-motion: reduce) {
     body { transition: none; }
