@@ -1599,29 +1599,29 @@
 
   /* Fullscreen crossfades the wallpaper with opacity. Keep panel surfaces
      independent of the changing backdrop and apply the album colors once. */
-  html:fullscreen body {
+  html:is(:fullscreen, .browser-fullscreen) body {
     transition: none;
   }
-  html:fullscreen body.is-album-morph .ambient-wallpaper {
+  html:is(:fullscreen, .browser-fullscreen) body.is-album-morph .ambient-wallpaper {
     transition-property: opacity;
   }
-  html:fullscreen .ambient-img-dof {
+  html:is(:fullscreen, .browser-fullscreen) .ambient-img-dof {
     display: none;
   }
-  html:fullscreen .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in) {
+  html:is(:fullscreen, .browser-fullscreen) .ambient-wallpaper.is-fading > .ambient-img:not(.ambient-in) {
     opacity: 1;
   }
-  html:fullscreen body[data-album] :is(.topbar, .sidebar),
-  html:fullscreen .text-pane-inner,
-  html:fullscreen .mini-player.active {
+  html:is(:fullscreen, .browser-fullscreen) body[data-album] :is(.topbar, .sidebar),
+  html:is(:fullscreen, .browser-fullscreen) .text-pane-inner,
+  html:is(:fullscreen, .browser-fullscreen) .mini-player.active {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  html:fullscreen body[data-album] :is(.topbar, .sidebar),
-  html:fullscreen .mini-player.active {
+  html:is(:fullscreen, .browser-fullscreen) body[data-album] :is(.topbar, .sidebar),
+  html:is(:fullscreen, .browser-fullscreen) .mini-player.active {
     background: color-mix(in srgb, var(--bg-panel) 94%, transparent);
   }
-  html:fullscreen .text-pane-inner {
+  html:is(:fullscreen, .browser-fullscreen) .text-pane-inner {
     background: color-mix(in srgb, var(--bg) 94%, transparent);
   }
 
@@ -4348,6 +4348,22 @@ window.addEventListener('keydown', (e) => {
 }, true);
 
 // ── FULLSCREEN TOGGLE ──
+const fullscreenDisplay = window.matchMedia('(display-mode: fullscreen)');
+
+function syncBrowserFullscreen() {
+  // Browser chrome fullscreen (for example F11) may leave fullscreenElement null.
+  // Allow one CSS pixel for fractional display scaling.
+  const fillsScreen = Math.abs(window.innerWidth - window.screen.width) <= 1 &&
+    Math.abs(window.innerHeight - window.screen.height) <= 1;
+  document.documentElement.classList.toggle('browser-fullscreen',
+    !document.fullscreenElement && (fullscreenDisplay.matches || fillsScreen));
+}
+
+window.addEventListener('resize', syncBrowserFullscreen);
+fullscreenDisplay.addEventListener('change', syncBrowserFullscreen);
+document.addEventListener('fullscreenchange', syncBrowserFullscreen);
+syncBrowserFullscreen();
+
 const fsBtn = document.getElementById('fullscreenBtn');
 fsBtn.addEventListener('click', () => {
   if (!document.fullscreenElement) {
