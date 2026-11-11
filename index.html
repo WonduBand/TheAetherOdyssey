@@ -748,38 +748,19 @@
 
   .text-body { flex: 1; overflow-y: auto; padding: 1.2rem 1.6rem 2.2rem; }
   /* Track changes only. Titles, the caption block, and the lyric sections share
-     one fade + blur + soft scale on the album-morph clock. No left slide, no
-     per-line delay. Album switches do not add this class — they crossfade on
-     the same 1s ease. The class is removed when the reveal ends so filter/scale
-     do not stick, and .text-body stays overflow-y: auto. */
+     one opacity + soft scale on the album-morph clock. No blur, no left slide,
+     no per-line delay. Album switches do not add this class. The class is
+     removed when the reveal ends so the transform does not stick, and
+     .text-body stays overflow-y: auto. */
   @keyframes textReveal {
-    from { opacity: 0; filter: blur(8px); scale: 0.978; }
-    to { opacity: 1; filter: blur(0); scale: 1; }
+    from { opacity: 0; transform: scale(0.978); }
+    to { opacity: 1; transform: scale(1); }
   }
   body.is-track-reveal .cover-bottom,
   body.is-track-reveal .text-head .th-num,
   body.is-track-reveal .text-head .th-title,
   body.is-track-reveal .text-body > * {
     animation: textReveal var(--album-morph) var(--album-ease) both;
-  }
-  /* Edge life on the lyrics panel: accent wash at the top and bottom only.
-     One soft pulse, then a long rest. The middle of the gradient is clear so
-     the type stays primary. Opacity only — nothing travels across the words. */
-  .text-pane-inner { position: relative; }
-  .text-pane-inner::after {
-    content: '';
-    position: absolute; inset: 0; z-index: 2; pointer-events: none;
-    border-radius: inherit;
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--accent-pale) 50%, transparent), transparent 15%),
-      linear-gradient(0deg, color-mix(in srgb, var(--accent) 36%, transparent), transparent 18%);
-    mix-blend-mode: screen;
-    opacity: 0.16;
-    animation: lyricsAmbient 8.5s ease-in-out infinite;
-  }
-  @keyframes lyricsAmbient {
-    0%, 64%, 100% { opacity: 0.14; }
-    76% { opacity: 0.5; }
   }
   .track-note { display: none; }
 
@@ -1018,13 +999,11 @@
     }
     .cover-song-note {
       font-size: 0.78rem; line-height: 1.45; margin-top: 0.35rem;
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
-      overflow: hidden;
     }
     .cover-pane.track-selected .cover-tagline,
     .cover-pane.track-selected .cover-meta { display: none; }
     .cover-pane.track-selected .cover-song-note {
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+      display: block;
     }
     .cover-pulse {
       position: static; flex: 0 0 auto;
@@ -1396,65 +1375,23 @@
   .loading-screen { transition: opacity 0.6s ease, transform 0.7s cubic-bezier(.22,1,.36,1), filter 0.6s ease; }
   .loading-screen.hidden { transform: scale(1.06); filter: blur(6px); }
 
-  /* ── ALIVE COVER: "living depth" ──
-     Album-cover stills keep a quiet breath. A selected track's still PNG (not the
-     cover clip) gets a slower ken-burns: scale 1.028 ↔ 1.058, a few pixels of
-     drift, and a sub-degree perspective lean. Periods differ so it doesn't loop
-     as a mechanical cycle.
-     Motion lives on the image only (the wrapper is never transformed, so the clip
-     button and text layers keep their stacking). Custom properties compose with
-     the cursor offset, the bass lean, and the swap transition. */
-  @property --breath { syntax: '<number>'; inherits: false; initial-value: 1.025; }
-  @property --dx { syntax: '<length>'; inherits: false; initial-value: 0px; }
-  @property --dy { syntax: '<length>'; inherits: false; initial-value: 0px; }
-  @property --lean-x { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-  @property --lean-y { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  /* Artwork stays still. Cursor parallax on desktop (--par-x / --par-y) remains;
+     looping breath, drift, and perspective lean are gone. */
   .cover-img-wrap { --par-x: 0px; --par-y: 0px; --beat: 0; }
   .cover-img {
-    scale: calc(var(--breath) + var(--beat) * 0.008);
-    translate: calc(var(--par-x) + var(--dx)) calc(var(--par-y) + var(--dy));
-    animation: fxCoverBreath 18s ease-in-out infinite, fxCoverDrift 27s ease-in-out infinite;
-  }
-  @keyframes fxCoverBreath { 0%, 100% { --breath: 1.02; } 50% { --breath: 1.035; } }
-  @keyframes fxCoverDrift {
-    0%, 100% { --dx: 0px; --dy: 0px; }
-    25% { --dx: -3px; --dy: 2px; }
-    50% { --dx: 2px; --dy: 3px; }
-    75% { --dx: 3px; --dy: -2px; }
-  }
-  /* Track stills only. The cover clip hides this image; album-cover view stays on the quieter breath. */
-  .cover-pane.track-selected .cover-img:not(.cover-img-morph) {
-    transform: perspective(1400px) rotateX(var(--lean-x)) rotateY(var(--lean-y));
-    transform-origin: 50% 46%;
-    animation:
-      fxTrackBreath 24s ease-in-out infinite,
-      fxTrackDrift 36s ease-in-out infinite,
-      fxTrackLean 30s ease-in-out infinite;
-  }
-  @keyframes fxTrackBreath { 0%, 100% { --breath: 1.028; } 50% { --breath: 1.058; } }
-  @keyframes fxTrackDrift {
-    0%, 100% { --dx: 0px; --dy: 0px; }
-    28% { --dx: -6px; --dy: 3px; }
-    60% { --dx: 5px; --dy: -4px; }
-    82% { --dx: 2px; --dy: 5px; }
-  }
-  @keyframes fxTrackLean {
-    0%, 100% { --lean-x: 0deg; --lean-y: 0deg; }
-    35% { --lean-x: 0.5deg; --lean-y: -0.4deg; }
-    70% { --lean-x: -0.45deg; --lean-y: 0.5deg; }
+    translate: var(--par-x) var(--par-y);
   }
   @media (min-width: 981px) {
     .cover-backdrop { translate: calc(var(--par-x) * -1.2) calc(var(--par-y) * -1.2); }
   }
-  /* the clip has its own framing: hide the breathing still underneath so no edge peeks out around it */
+  /* the clip has its own framing: hide the still underneath so no edge peeks out around it */
   .cover-img-wrap:has(.clip-video.active) .cover-img { visibility: hidden; }
   @media (max-width: 980px) {
-    .cover-img-wrap { overflow: hidden; }   /* keep the breathing art inside its frame on the mobile Cover tab */
+    .cover-img-wrap { overflow: hidden; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .cover-img { animation: none !important; scale: none !important; translate: none !important; transform: none !important; }
+    .cover-img { translate: none !important; transform: none !important; }
     .cover-backdrop { translate: none !important; }
-    .text-pane-inner::after { animation: none !important; }
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1598,42 +1535,9 @@
      Theme colours are the registered custom properties on body. A second
      colour/background/border transition on descendants would chase that morph
      and land late, so while .is-album-morph is set those durations drop to 0
-     and the variables drive every accent together. Wallpaper plates, cover
-     art, and the content reveal opt back into the same 1s ease. */
-  @keyframes albumReveal {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes albumRevealOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-  }
-  /* Crossfade replaced panes so the old track list / title does not vanish
-     on frame one while the wallpaper is still easing in. */
-  .track-nav, .text-body, .text-head, .cover-bottom { position: relative; }
-  body.is-album-morph .cover-bottom { animation: none; }
-  body.is-album-morph .album-morph-live {
-    animation: albumReveal var(--album-morph) var(--album-ease) both;
-  }
-  body.is-album-morph .album-morph-ghost {
-    position: absolute; left: 0; right: 0; top: 0; z-index: 3;
-    pointer-events: none;
-    animation: albumRevealOut var(--album-morph) var(--album-ease) both;
-  }
-  body.is-album-morph .track-nav > .album-morph-ghost,
-  body.is-album-morph .text-body > .album-morph-ghost,
-  body.is-album-morph .is-content-morph > .album-morph-ghost {
-    bottom: 0; overflow: hidden;
-  }
-  body.is-album-morph .text-head > .album-morph-ghost {
-    display: flex; align-items: center; gap: 0.8rem;
-  }
-  body.is-album-morph .cover-bottom > .album-morph-ghost {
-    display: flex; flex-direction: column;
-  }
-  body.is-album-morph .is-content-morph > :not(.album-morph-ghost) {
-    animation: albumReveal var(--album-morph) var(--album-ease) both;
-  }
+     and the variables drive every accent together. Wallpaper plates opt back
+     into the same 1s ease. Panel content (track list, titles, lyrics, cover
+     chrome and art) swaps instantly — no opacity crossfade of every pane. */
   body.is-album-morph * {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
@@ -1643,11 +1547,7 @@
   body.is-album-morph .ambient-wallpaper.is-fading > .ambient-img-dof,
   body.is-album-morph .ambient-wallpaper.is-fading > .ambient-bloom,
   body.is-album-morph .ambient-wallpaper.is-fading > .ambient-glow-slot,
-  body.is-album-morph .ambient-in,
-  body.is-album-morph .cover-img-wrap.is-cover-fading > .cover-img,
-  body.is-album-morph .cover-img-wrap.is-cover-fading > .cover-backdrop,
-  body.is-album-morph .cover-img-morph,
-  body.is-album-morph .cover-backdrop-morph {
+  body.is-album-morph .ambient-in {
     transition-duration: var(--album-morph) !important;
     transition-delay: 0s !important;
   }
@@ -1698,12 +1598,9 @@
     .topbar-stamp, .track-row.playing, .ao-track-item.playing, .track-row.playing::after, .ao-track-item.playing::after,
     .mini-player::after, body.fx-playing .mp-play, .cover-title,
     .loading-ring, .loading-bar::after, .loading-mark, .text-body > *, .cover-bottom,
-    .text-head .th-title, .text-head .th-num, .text-pane-inner::after { animation: none !important; }
+    .text-head .th-title, .text-head .th-num { animation: none !important; }
     body::after, .mini-player::after, .fx-flash, .fx-spot { display: none !important; }
     .loading-log div { opacity: 1; clip-path: none; }
-    body.is-album-morph .album-morph-live,
-    body.is-album-morph .album-morph-ghost,
-    body.is-album-morph .is-content-morph > :not(.album-morph-ghost),
     .cover-img-morph { animation: none !important; }
     .ambient-in,
     .ambient-wallpaper.is-fading > .ambient-img,
@@ -3545,10 +3442,17 @@ function renderCover() {
   // even before we know whether the real file exists.
   fallback.innerHTML = meta.svgFallback + `<div class="placeholder-caption">Drop in ${srcToUse} to replace this artwork</div>`;
 
-  // Album switch: crossfade from the plate already on screen. Waiting for decode
-  // happened in switchAlbum, so this starts on the same frame as the theme.
-  if (document.body.classList.contains('is-album-morph') && img.getAttribute('src')) {
-    startCoverCrossfade(srcToUse);
+  // Album switch: swap the preloaded plate immediately. Wallpaper and theme
+  // still crossfade; fading the artwork too made the whole stage flicker.
+  if (document.body.classList.contains('is-album-morph') && srcToUse) {
+    img.src = srcToUse;
+    img.style.display = 'block';
+    fallback.style.display = 'none';
+    img.classList.remove('swap');
+    if (backdrop) {
+      backdrop.style.backgroundImage = 'url("' + encodeURI(srcToUse) + '")';
+      backdrop.classList.remove('swap');
+    }
     return;
   }
 
@@ -3710,8 +3614,8 @@ function renderText() {
 }
 
 // ── SELECTION ──
-// Album changes wait until the new wallpaper and cover are decoded, then theme,
-// wallpaper crossfade, cover, track list, and lyrics all start on one 1s ease.
+// Album changes wait until the new wallpaper and cover are decoded, then the
+// theme and wallpaper crossfade on one 1s ease. Panel content swaps instantly.
 let albumSwitchToken = 0;
 let albumMorphTimer = 0;
 let trackRevealTimer = 0;
@@ -3737,41 +3641,13 @@ function finishAlbumMorph() {
 }
 
 function openContentMorph(el) {
-  if (!document.body.classList.contains('is-album-morph')) {
-    el.replaceChildren();
-    return el;
-  }
-  el.querySelectorAll(':scope > .album-morph-ghost').forEach(g => g.remove());
-  const prev = el.querySelector(':scope > .album-morph-live');
-  if (prev) {
-    while (prev.firstChild) el.insertBefore(prev.firstChild, prev);
-    prev.remove();
-  }
-  if (!el.firstChild) return el;
-  const ghost = document.createElement('div');
-  ghost.className = 'album-morph-ghost';
-  ghost.setAttribute('aria-hidden', 'true');
-  const y = el.scrollTop || 0;
-  while (el.firstChild) ghost.appendChild(el.firstChild);
-  if (y) ghost.style.transform = 'translateY(' + (-y) + 'px)';
-  el.appendChild(ghost);
-  const live = document.createElement('div');
-  live.className = 'album-morph-live';
-  el.appendChild(live);
-  return live;
+  // Instant swap: no ghost/live opacity layers (those flickered the whole UI).
+  el.replaceChildren();
+  return el;
 }
 
-function snapshotContentMorph(el) {
-  if (!el || !document.body.classList.contains('is-album-morph')) return;
-  el.querySelectorAll(':scope > .album-morph-ghost').forEach(g => g.remove());
-  const ghost = document.createElement('div');
-  ghost.className = 'album-morph-ghost';
-  ghost.setAttribute('aria-hidden', 'true');
-  ghost.innerHTML = el.innerHTML;
-  ghost.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
-  ghost.querySelectorAll('canvas, button, .album-morph-ghost').forEach(n => n.remove());
-  el.insertBefore(ghost, el.firstChild);
-  el.classList.add('is-content-morph');
+function snapshotContentMorph() {
+  // No-op. Titles and cover chrome update in place.
 }
 
 function commitContentMorph() {
@@ -4205,9 +4081,9 @@ window.addEventListener('resize', () => {
 
 // ── SWIPE BETWEEN MOBILE TABS ──
 // Axis lock: a gesture that starts vertical stays a scroll; only a clearly
-// horizontal flick changes tabs. Album chips, controls, and an overflowing
-// lyrics pane own their own drags so a finger on the text never calls
-// preventDefault and cancels that scroll.
+// horizontal flick changes tabs. Album chips and controls own their own
+// drags. Lyrics use the axis lock so a vertical finger still scrolls and a
+// horizontal flick can leave the lyrics panel.
 const mobileTabOrder = ['tracks', 'cover', 'lyrics'];
 const SWIPE_LOCK = 14;
 const SWIPE_COMMIT = 64;
@@ -4215,9 +4091,7 @@ let swipe = null;
 
 function swipeBlockedTarget(target) {
   if (!target || !target.closest) return false;
-  if (target.closest('.album-tabs, input, textarea, button, a, .np-transport')) return true;
-  const lyrics = target.closest('.text-body');
-  return !!(lyrics && lyrics.scrollHeight > lyrics.clientHeight + 1);
+  return !!target.closest('.album-tabs, input, textarea, button, a, .np-transport');
 }
 
 appMainEl.addEventListener('touchstart', (e) => {
