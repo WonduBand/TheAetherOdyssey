@@ -166,6 +166,7 @@
 
   /* ── SIDEBAR ── */
   .sidebar {
+    position: relative;
     background: var(--bg-panel);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
@@ -1569,6 +1570,13 @@
     opacity: 0;
   }
 
+  .panel-album-fade {
+    z-index: 7;
+    border-radius: inherit;
+    background: linear-gradient(140deg,
+      color-mix(in srgb, var(--accent) 62%, var(--bg)), transparent 88%);
+  }
+
   /* ── Reduced motion: keep the look, drop the movement ── */
   @media (prefers-reduced-motion: reduce) {
     body { transition: none; }
@@ -1846,7 +1854,7 @@
   <canvas class="ambient-particles" id="ambientParticles"></canvas>
   <div class="ambient-grade" id="ambientGrade" aria-hidden="true"></div>
   <div class="ambient-feather"></div>
-  <div class="album-fade" id="albumFade" aria-hidden="true"></div>
+  <div class="album-fade" aria-hidden="true"></div>
 </div>
 
 <div class="fx-flash" id="fxFlash" aria-hidden="true"></div>
@@ -1866,6 +1874,7 @@
   <div class="app-main" data-view="tracks">
 
     <nav class="sidebar">
+      <div class="album-fade panel-album-fade" aria-hidden="true"></div>
       <div class="album-tabs" id="albumTabs"></div>
       <div class="track-nav" id="trackNav"></div>
       <div class="sidebar-foot" id="sidebarFoot">⬡ Elysium Archive Project ⬡</div>
@@ -1874,6 +1883,7 @@
     <button type="button" class="pane-rail cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel" aria-label="Hide artwork panel" aria-controls="coverPaneInner" aria-expanded="true"><span class="rail-handle"><svg class="rail-chev" viewBox="0 0 14 22" aria-hidden="true"><path d="M9.5 5 L4 11 L9.5 17"/><path class="chev-ghost" d="M13 5 L7.5 11 L13 17"/></svg><span class="rail-label">Art</span></span></button>
 
     <section class="cover-pane">
+      <div class="album-fade panel-album-fade" aria-hidden="true"></div>
       <div class="cover-pane-inner" id="coverPaneInner">
         <div class="cover-img-wrap">
           <div class="cover-backdrop" id="coverBackdrop" aria-hidden="true"></div>
@@ -1915,6 +1925,7 @@
     <button type="button" class="pane-rail text-pane-toggle" id="textPaneToggle" title="Hide lyrics panel" aria-label="Hide lyrics panel" aria-controls="textPaneInner" aria-expanded="true"><span class="rail-handle"><svg class="rail-chev" viewBox="0 0 14 22" aria-hidden="true"><path d="M9.5 5 L4 11 L9.5 17"/><path class="chev-ghost" d="M13 5 L7.5 11 L13 17"/></svg><span class="rail-label">Lyrics</span></span></button>
 
     <section class="text-pane" id="textPane">
+      <div class="album-fade panel-album-fade" aria-hidden="true"></div>
       <div class="text-pane-inner" id="textPaneInner">
         <div class="text-head">
           <button class="text-nav-btn" id="prevBtn" title="Previous track"><span class="icon icon-tri-left"></span></button>
@@ -3589,7 +3600,7 @@ function renderText() {
 // Album changes wait until the new wallpaper and cover are decoded, then the
 // wallpaper, theme, cover and panel content update together.
 let albumSwitchToken = 0;
-let albumFadeAnimation;
+let albumFadeAnimations = [];
 let albumMorphTimer = 0;
 let trackRevealTimer = 0;
 
@@ -3655,11 +3666,14 @@ function beginAlbumMorph() {
 }
 
 function fadeAlbumWallpaper() {
-  albumFadeAnimation?.cancel();
+  albumFadeAnimations.forEach(animation => animation.cancel());
+  albumFadeAnimations = [];
   if (prefersReducedMotion()) return;
-  albumFadeAnimation = document.getElementById('albumFade').animate(
-    [{ opacity: 0.42 }, { opacity: 0 }],
-    { duration: 2000, easing: 'cubic-bezier(.18, .65, .25, 1)' }
+  albumFadeAnimations = Array.from(document.querySelectorAll('.album-fade'), layer =>
+    layer.animate(
+      [{ opacity: 0.42 }, { opacity: 0 }],
+      { duration: 2000, easing: 'cubic-bezier(.18, .65, .25, 1)' }
+    )
   );
 }
 
