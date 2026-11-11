@@ -1561,6 +1561,14 @@
     transition: none;
   }
 
+  .album-fade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--bg) 72%, var(--accent));
+    opacity: 0;
+  }
+
   /* ── Reduced motion: keep the look, drop the movement ── */
   @media (prefers-reduced-motion: reduce) {
     body { transition: none; }
@@ -1838,6 +1846,7 @@
   <canvas class="ambient-particles" id="ambientParticles"></canvas>
   <div class="ambient-grade" id="ambientGrade" aria-hidden="true"></div>
   <div class="ambient-feather"></div>
+  <div class="album-fade" id="albumFade" aria-hidden="true"></div>
 </div>
 
 <div class="fx-flash" id="fxFlash" aria-hidden="true"></div>
@@ -3580,6 +3589,7 @@ function renderText() {
 // Album changes wait until the new wallpaper and cover are decoded, then the
 // wallpaper, theme, cover and panel content update together.
 let albumSwitchToken = 0;
+let albumFadeAnimation;
 let albumMorphTimer = 0;
 let trackRevealTimer = 0;
 
@@ -3644,6 +3654,15 @@ function beginAlbumMorph() {
   });
 }
 
+function fadeAlbumWallpaper() {
+  albumFadeAnimation?.cancel();
+  if (prefersReducedMotion()) return;
+  albumFadeAnimation = document.getElementById('albumFade').animate(
+    [{ opacity: 0.42 }, { opacity: 0 }],
+    { duration: 2000, easing: 'cubic-bezier(.18, .65, .25, 1)' }
+  );
+}
+
 function switchAlbum(num, track, done) {
   const meta = ALBUMS[num];
   if (!meta || track < -1 || track >= meta.tracks.length) return;
@@ -3657,6 +3676,7 @@ function switchAlbum(num, track, done) {
       beginAlbumMorph();
       document.body.setAttribute('data-album', String(num));
       setAmbientWallpaper(num);
+      fadeAlbumWallpaper();
     }
     renderAlbumTabs();
     renderTrackNav();
