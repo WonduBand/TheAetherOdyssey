@@ -3397,7 +3397,10 @@ function renderTrackNav() {
 }
 
 // ── RENDER: COVER PANE ──
+let coverRenderToken = 0;
+
 function renderCover() {
+  const token = ++coverRenderToken;
   const meta = ALBUMS[state.album];
   const track = state.track >= 0 ? meta.tracks[state.track] : null;
 
@@ -3433,44 +3436,31 @@ function renderCover() {
   // On a track view, prefer that track's own illustration, falling back to the album cover.
   const srcToUse = track ? (track.image || meta.cover) : meta.cover;
 
-  // Show themed placeholder art immediately so the pane is never empty,
-  // even before we know whether the real file exists.
-  fallback.innerHTML = meta.svgFallback + `<div class="placeholder-caption">Drop in ${srcToUse} to replace this artwork</div>`;
-
-  // Swap the preloaded cover in the same update as the album wallpaper.
-  if (document.body.classList.contains('is-album-morph') && srcToUse) {
-    img.src = srcToUse;
-    img.style.display = 'block';
-    fallback.style.display = 'none';
-    img.classList.remove('swap');
-    if (backdrop) {
-      backdrop.style.backgroundImage = 'url("' + encodeURI(srcToUse) + '")';
-      backdrop.classList.remove('swap');
-    }
-    return;
-  }
-
+  const albumChanged = document.body.classList.contains('is-album-morph');
+  fallback.innerHTML = meta.svgFallback + '<div class="placeholder-caption">Loading artwork…</div>';
   fallback.style.display = 'flex';
   img.style.display = 'none';
   img.classList.add('swap');
   if (backdrop) backdrop.classList.add('swap');
 
-  const tmp = new Image();
-  tmp.onload = () => {
-    img.src = srcToUse;
-    if (backdrop) {
-      backdrop.style.backgroundImage = 'url("' + encodeURI(srcToUse) + '")';
-      requestAnimationFrame(() => backdrop.classList.remove('swap'));
+  aoPreloadImage(srcToUse).then(ready => {
+    if (token !== coverRenderToken) return;
+    if (!ready) {
+      fallback.querySelector('.placeholder-caption').textContent = 'Artwork unavailable';
+      return;
     }
+    img.src = srcToUse;
+    if (backdrop) backdrop.style.backgroundImage = 'url("' + encodeURI(srcToUse) + '")';
     img.style.display = 'block';
     fallback.style.display = 'none';
-    requestAnimationFrame(() => img.classList.remove('swap'));
-  };
-  tmp.onerror = () => {
-    img.style.display = 'none';
-    fallback.style.display = 'flex';
-  };
-  tmp.src = srcToUse;
+    const reveal = () => {
+      if (token !== coverRenderToken) return;
+      img.classList.remove('swap');
+      if (backdrop) backdrop.classList.remove('swap');
+    };
+    if (albumChanged) reveal();
+    else requestAnimationFrame(reveal);
+  });
 }
 
 function commitCoverMorph() {
@@ -3608,9 +3598,7 @@ function renderText() {
 }
 
 // ── SELECTION ──
-// Album changes wait until the new wallpaper and cover are decoded, then the
-// wallpaper, theme, cover and panel content update together.
-let albumSwitchToken = 0;
+// Switch the panels immediately and apply artwork once it is decoded.
 let albumFadeAnimations = [];
 let albumMorphTimer = 0;
 let trackRevealTimer = 0;
@@ -3688,34 +3676,27 @@ function fadeAlbumWallpaper() {
   );
 }
 
-function switchAlbum(num, track, done) {
+function switchAlbum(num, track) {
   const meta = ALBUMS[num];
   if (!meta || track < -1 || track >= meta.tracks.length) return;
-  const token = ++albumSwitchToken;
   const albumChanged = state.album !== num;
-  const apply = () => {
-    if (token !== albumSwitchToken) return;
-    state.album = num;
-    state.track = track;
-    if (albumChanged) {
-      beginAlbumMorph();
-      document.body.setAttribute('data-album', String(num));
-      setAmbientWallpaper(num);
-      fadeAlbumWallpaper();
+  state.album = num;
+  state.track = track;
+  if (albumChanged) {
+    beginAlbumMorph();
+    document.body.setAttribute('data-album', String(num));
+    fadeAlbumWallpaper();
+    const wallpaper = ambientThemes[num]?.image;
+    if (wallpaper) {
+      aoPreloadImage(wallpaper).then(ready => {
+        if (ready && state.album === num) setAmbientWallpaper(num);
+      });
     }
-    renderAlbumTabs();
-    renderTrackNav();
-    renderCover();
-    renderText();
-    if (typeof done === 'function') done();
-  };
-  if (!albumChanged) { apply(); return; }
-  const jobs = [];
-  const theme = ambientThemes[num];
-  if (theme && theme.image) jobs.push(aoPreloadImage(theme.image));
-  const art = (track >= 0 && meta.tracks[track] && (meta.tracks[track].image || meta.cover)) || meta.cover;
-  if (art) jobs.push(aoPreloadImage(art));
-  Promise.all(jobs).then(apply);
+  }
+  renderAlbumTabs();
+  renderTrackNav();
+  renderCover();
+  renderText();
 }
 
 function selectAlbum(num) {
@@ -4848,7 +4829,10 @@ function aoPreloadImage(url, priority = 'auto') {
       // decode() guarantees the bitmap is ready, so it paints instantly when the UI uses it
       (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => resolve(true));
     };
-    img.onerror = () => resolve(false); // missing file: count it as done, the UI has an SVG fallback
+    img.onerror = () => {
+      AO_IMAGE_CACHE.delete(url);
+      resolve(false);
+    };
   });
   img.src = url;
   AO_IMAGE_CACHE.set(url, { img, promise });
