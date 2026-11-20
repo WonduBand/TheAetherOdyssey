@@ -3784,7 +3784,7 @@ function ensureAudioAnalyser() {
 
 function trackFileName(albumNum, idx) {
   const t = ALBUMS[albumNum].tracks[idx];
-  const extension = albumNum >= 1 && albumNum <= 3 ? 'opus' : 'mp3';
+  const extension = albumNum >= 1 && albumNum <= 4 ? 'opus' : 'mp3';
   return `Album ${albumNum}/${String(idx+1).padStart(2,'0')} - ${t.title}.${extension}`;
 }
 
