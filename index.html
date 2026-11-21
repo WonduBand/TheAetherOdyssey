@@ -4164,7 +4164,8 @@ function setCoverClipOpen(open) {
 }
 
 function playCoverClip() {
-  const src = `Album ${state.album}/Cover${state.album}_Clip.mp4`;
+  const mobile = window.matchMedia('(max-width: 980px)').matches;
+  const src = `Album ${state.album}/Cover${state.album}_Clip${mobile ? '.mobile' : ''}.mp4`;
   clipVideo.src = src;
   forceMuted();
   clipVideo.classList.add('active');
