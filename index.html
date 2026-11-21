@@ -257,13 +257,13 @@
   .track-nav-divider { height: 1px; background: var(--border); opacity: 0.6; margin: 0 0.6rem 0.5rem; transition: background 0.28s ease; }
 
   .sidebar-foot {
-    padding: 0.6rem 1rem; font-size: 0.52rem; letter-spacing: 0.15em;
-    color: #333; border-top: 1px solid var(--border); text-transform: uppercase;
-    transition: border-color 0.28s ease;
+    padding: 0.6rem 1rem; font-size: 0.65rem; line-height: 1.5;
+    color: var(--text-dim); border-top: 1px solid var(--border);
+    flex-shrink: 0; max-height: 35%; overflow-y: auto;
   }
-  @media (max-width: 980px) {
-    .sidebar-foot { display: none; }
-  }
+  .sidebar-foot summary { cursor: pointer; }
+  .sidebar-foot p { margin-top: 0.6rem; }
+
 
   /* ── TRACK VIDEO BUTTON (rows with a `youtube` id) ── */
   .row-video-btn {
@@ -1879,7 +1879,11 @@
       <div class="album-fade panel-album-fade" aria-hidden="true"></div>
       <div class="album-tabs" id="albumTabs"></div>
       <div class="track-nav" id="trackNav"></div>
-      <div class="sidebar-foot" id="sidebarFoot">⬡ Elysium Archive Project ⬡</div>
+      <details class="sidebar-foot" id="sidebarFoot">
+        <summary>Credits &amp; usage</summary>
+        <p>© 2026 Wondu. Music, composition, and creative direction by Wondu.<br>
+Music is provided for personal listening. Please contact Wondu for permission to redistribute, remix, or use the material commercially.</p>
+      </details>
     </nav>
 
     <button type="button" class="pane-rail cover-pane-toggle" id="coverPaneToggle" title="Hide artwork panel" aria-label="Hide artwork panel" aria-controls="coverPaneInner" aria-expanded="true"><span class="rail-handle"><svg class="rail-chev" viewBox="0 0 14 22" aria-hidden="true"><path d="M9.5 5 L4 11 L9.5 17"/><path class="chev-ghost" d="M13 5 L7.5 11 L13 17"/></svg><span class="rail-label">Art</span></span></button>
